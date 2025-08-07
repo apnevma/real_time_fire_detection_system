@@ -13,11 +13,11 @@ This project simulates a multi-sensor system using Docker containers. Each senso
 ## Getting Started
 
 1. Clone the repo
-2. Run `docker-compose -f docker-compose-mongodb.yml up --build`
+2. Run `docker compose -f docker-compose-mongodb.yml -p mongodb up --build -d`
 3. Monitor sensor data in Mongo Express or query the API
 
 ## Endpoints
 
 - `POST /sensor-data/`: Send sensor reading
-- `GET /sensor-data/`: View all readings
-- `GET /sensors/stats/{sensor_type}`: Get min, max, avg
+- `GET /sensor-data/`: Query sensor data by sensor_type, location or timestamp
+- `GET /sensors/stats/{sensor_type}`: Get sensor statistics (min, max, mean, top10_min, top10_max)
