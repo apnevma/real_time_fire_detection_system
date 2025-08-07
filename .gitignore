@@ -1,0 +1,7 @@
+# Local MongoDB volume
+mongodb_data/
+
+# Python
+__pycache__/
+*.venv
+venv/

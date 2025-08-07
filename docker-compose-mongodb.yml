@@ -1,0 +1,89 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-container
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongodb_data:/data/db
+    networks:
+      - mongo-network
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo-express-container
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root
+      ME_CONFIG_MONGODB_ADMINPASSWORD: rootpassword
+      ME_CONFIG_MONGODB_SERVER: mongodb
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+    networks:
+      - mongo-network
+
+#  node-app:
+#    build: ./node-app
+#    container_name: node-app-container
+#    ports:
+#      - "3000:3000"
+#    depends_on:
+#      - mongodb
+#    networks:
+#     - mongo-network
+
+  sensor-api:
+    container_name: sensor-api-container
+    build:
+      context: ./temperature_sensor_simulator
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+    networks:
+      - mongo-network
+
+  temp-simulator:
+    container_name: temp-simulator-container
+    build:
+      context: ./temperature_sensor_simulator
+      dockerfile: Dockerfile.simulator
+    depends_on:
+      - sensor-api
+    networks:
+      - mongo-network
+
+  humidity-simulator:
+    container_name: humidity-simulator-container
+    build:
+      context: ./humidity_sensor_simulator
+      dockerfile: Dockerfile.simulator
+    depends_on:
+      - sensor-api
+    networks:
+      - mongo-network
+
+  acoustic-simulator:
+    container_name: acoustic-simulator-container
+    build:
+      context: ./acoustic_sensor_simulator
+      dockerfile: Dockerfile.simulator
+    depends_on:
+      - sensor-api
+    networks:
+      - mongo-network
+
+networks:
+  mongo-network:
+    driver: bridge
+
+
+#deploy with "docker compose -f docker-compose-mongodb.yml -p mongodb up -d"
+#undeploy with "docker compose -f docker-compose-mongodb.yml -p mongodb down"
+#default credential for mongodb express is "admin" and "pass"

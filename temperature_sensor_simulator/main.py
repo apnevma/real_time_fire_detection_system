@@ -1,0 +1,158 @@
+from fastapi import FastAPI, HTTPException, Query
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, EmailStr
+from typing import Optional
+from datetime import datetime, timedelta
+import pytz
+import json
+import os
+from db_connect import collection
+
+app = FastAPI()
+
+# file path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # This gives the path to temperature_sensor_simulator
+FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")
+
+# Pydantic model
+class SensorData(BaseModel):
+    sensorId: str
+    type: str
+    vendorName: str
+    vendorEmail: EmailStr
+    description: Optional[str]
+    building: str
+    room: int
+    temperature: Optional[float] = None
+    humidity: Optional[float] = None
+    soundLevel: Optional[float] = None
+
+@app.post("/sensor-data/")
+async def receive_sensor_data(data: SensorData):
+    sensor_dict = data.model_dump()
+    # Save timestamp to local timezone, instead of UTC
+    local_tz = pytz.timezone("Europe/Athens")  
+    sensor_dict["timestamp"] = datetime.now(local_tz).isoformat()
+
+    try:
+        # Save to JSON file
+        if os.path.exists(FILE_PATH):
+            with open(FILE_PATH, "r", encoding="utf-8") as f:
+                try:
+                    all_data = json.load(f)
+                except json.JSONDecodeError:
+                    all_data = []
+        else:
+            all_data = []
+
+        all_data.append(sensor_dict)
+
+        with open(FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(all_data, f, indent=2)
+
+        # Save to MongoDB
+        result = collection.insert_one(sensor_dict)
+
+        return {
+            "message": "Data received and saved to file and MongoDB",
+            "id": str(result.inserted_id)
+        }
+            
+    except Exception as e:
+        print(f"File Write Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to save data to file")
+    
+
+@app.get("/sensor-data/")
+async def query_sensor_data(
+    type: Optional[str] = Query(None, description="Temperature, Humidity or Acoustic"),
+    building: Optional[str] = None,
+    room: Optional[int] = None,
+    start_time: Optional[str] = Query(None, description="Start datetime (e.g., 2025-08-06 or 2025-08-06T14:00:00)"),
+    end_time: Optional[str] = Query(None, description="End datetime (exclusive, e.g., 2025-08-07 or 2025-08-06T18:00:00)"),
+    page: int = 1,
+    page_size: int = 10
+):
+    query = {}
+
+    # Add filters
+    if type:
+        query["type"] = type
+    if building:
+        query["building"] = building
+    if room:
+        query["room"] = room
+    if start_time or end_time:
+        time_filter = {}
+        try:
+            if start_time:
+                start_dt = datetime.fromisoformat(start_time)
+                time_filter["$gte"] = start_dt.isoformat()
+
+            if end_time:
+                # Add 1 day so that the date is inclusive
+                end_dt = datetime.fromisoformat(end_time) + timedelta(days=1)
+                time_filter["$lt"] = end_dt.isoformat()
+
+            query["timestamp"] = time_filter
+
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+
+    try:
+        skip = (page - 1) * page_size
+        results = list(collection.find(query).skip(skip).limit(page_size))
+        
+        # Convert ObjectId to string
+        for r in results:
+            r["_id"] = str(r["_id"])
+        
+        return {
+            "page": page,
+            "page_size": page_size,
+            "results": results
+        }
+
+    except Exception as e:
+        print(f"Query Error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to query sensor data")
+    
+
+@app.get("/sensors/stats/{sensor_type}")
+def get_sensor_stats(sensor_type: str):
+    valid_sensor_types = {
+        "Temperature": "temperature",
+        "Humidity": "humidity",
+        "Acoustic": "soundLevel"
+    }
+
+    if sensor_type not in valid_sensor_types:
+        raise HTTPException(status_code=400, detail="Invalid sensor type. Must be Temperature, Humidity or Acoustic.")
+    
+    sensor_field = valid_sensor_types[sensor_type]
+
+    # Get readings from MongoDB
+    readings = list(collection.find({"type":sensor_type}))
+
+    if not readings:
+        raise HTTPException(status_code=404, detail=f"No data found for sensor type: {sensor_type}")
+    
+    # Extract values 
+    values = [reading[sensor_field] for reading in readings if isinstance(reading[sensor_field], (int, float))]
+
+    if not values:
+        raise HTTPException(status_code=404, detail=f"No numeric values found for {sensor_type}")
+    
+    values.sort()
+
+    stats = {
+        "sensorType": sensor_type,
+        "min": values[0],
+        "max": values[-1],
+        "range": values[-1] - values[0],
+        "mean": round(sum(values) / len(values)),
+        "top10_max": sorted(values, reverse=True)[:10],
+        "top10_min": values[:10]
+    }
+
+    return JSONResponse(content=stats)
