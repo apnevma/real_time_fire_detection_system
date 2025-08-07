@@ -18,7 +18,7 @@ sensor_config = {
     }
 }
 
-def generate_sensor_data():
+def generate_sensor_data(building: str, floor: int):
     vendors = [
         ("HydroSense", "support@hydrosense.com"),
         ("AquaMetrics", "contact@aquametrics.org"),
@@ -27,10 +27,6 @@ def generate_sensor_data():
     ]
 
     vendorName, vendorEmail = random.choice(vendors)
-
-    # Scenario: 3 buildings (A–C), 4 floors each
-    building = random.choice(['A', 'B', 'C'])
-    floor = random.randint(1, 4)
 
     # Humidity generation logic: Gaussian distribution
     config = sensor_config["Humidity"]
@@ -71,13 +67,17 @@ def wait_for_api(max_retries=30, delay=2):
 def simulate_posting():
     wait_for_api()
     while True:
-        humidity_data = generate_sensor_data()
-        try:
-            respone = requests.post("http://sensor-api:8000/sensor-data/", json=humidity_data)
-            print(f"Response: {respone.status_code}, {respone.json()}")
-        except Exception as e:
-            print(f"Error posting humidity data: {e}")
-        time.sleep(600)     # Post every 10 minutes
+        # Scenario: 3 buildings (A–C), 4 floors each
+        for building in ['A', 'B', 'C']:    # Buildings A, B, C
+            for floor in range(1, 5):  # Floors 1 to 4
+                humidity_data = generate_sensor_data(building, floor)
+                try:
+                    response = requests.post("http://sensor-api:8000/sensor-data/", json=humidity_data)
+                    print(f"Sent data: {humidity_data}")
+                    print(f"Response: {response.status_code}, {response.json()}")
+                except Exception as e:
+                    print(f"Error posting data: {e}")
+        time.sleep(300)  # Post every 5 minutes
 
 if __name__ == "__main__":
     simulate_posting()
