@@ -2,6 +2,20 @@
 
 This project simulates a multi-sensor system using Docker containers. Each sensor (temperature, humidity, acoustic) runs in its own container and sends data to a central API, which stores it in a MongoDB database.
 
+## Sensor Data Simulation
+
+This project simulates three types of sensors: temperature, humidity, and acoustic. For each sensor type, a reading is generated every 10 minutes for all floors of all buildings in the simulated environment.
+
+    There are 3 buildings: A, B, and C
+
+    Each building has 4 floors
+
+    That gives 12 unique locations per sensor type
+
+As a result, 36 sensor readings (12 per sensor type) are created and sent to the database every 10 minutes.
+
+Each reading includes metadata such as sensor type, vendor info, building and floor location, timestamp, and the simulated value. The values are generated using a normal distribution within realistic min/max ranges defined per sensor.
+
 ## Features
 
 - Sensor simulators (Temperature, Humidity, Acoustic)
