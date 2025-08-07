@@ -77,7 +77,7 @@ def simulate_posting():
             print(f"Response: {respone.status_code}, {respone.json()}")
         except Exception as e:
             print(f"Error posting humidity data: {e}")
-        time.sleep(10)
+        time.sleep(600)     # Post every 10 minutes
 
 if __name__ == "__main__":
     simulate_posting()
