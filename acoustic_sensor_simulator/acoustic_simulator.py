@@ -9,7 +9,7 @@ athens_tz = ZoneInfo("Europe/Athens") #Athens timezone
 
 sensor_config = {
     "Acoustic": {
-        "min": 30.0,       # Quiet room (e.g., whisper)
+        "min": 30.0,       # Quiet floor (e.g., whisper)
         "max": 90.0,      # Very loud (e.g., factory, heavy traffic)
         "mean": 55.0,      # Normal environment (e.g., conversation level)
         "std": 10.0,       # Natural variation
@@ -27,9 +27,9 @@ def generate_sensor_data():
 
     vendorName, vendorEmail = random.choice(vendors)
 
-    # Scenario: 3 buildings (A–C), 50 rooms each
+    # Scenario: 3 buildings (A–C), 4 floors each
     building = random.choice(['A', 'B', 'C'])
-    room = random.randint(1, 50)
+    floor = random.randint(1, 4)
 
     # Sound Level generation logic: Gaussian distribution
     config = sensor_config["Acoustic"]
@@ -48,7 +48,7 @@ def generate_sensor_data():
         "vendorEmail": vendorEmail,
         "description": "Simulated acoustic sensor",
         "building": building,
-        "room": room,
+        "floor": floor,
         "temperature": None,
         "humidity": None,
         "soundLevel": soundLevel,

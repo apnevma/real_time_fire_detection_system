@@ -22,7 +22,7 @@ class SensorData(BaseModel):
     vendorEmail: EmailStr
     description: Optional[str]
     building: str
-    room: int
+    floor: int
     temperature: Optional[float] = None
     humidity: Optional[float] = None
     soundLevel: Optional[float] = None
@@ -67,7 +67,7 @@ async def receive_sensor_data(data: SensorData):
 async def query_sensor_data(
     type: Optional[str] = Query(None, description="Temperature, Humidity or Acoustic"),
     building: Optional[str] = None,
-    room: Optional[int] = None,
+    floor: Optional[int] = None,
     start_time: Optional[str] = Query(None, description="Start datetime (e.g., 2025-08-06 or 2025-08-06T14:00:00)"),
     end_time: Optional[str] = Query(None, description="End datetime (exclusive, e.g., 2025-08-07 or 2025-08-06T18:00:00)"),
     page: int = 1,
@@ -80,8 +80,8 @@ async def query_sensor_data(
         query["type"] = type
     if building:
         query["building"] = building
-    if room:
-        query["room"] = room
+    if floor:
+        query["floor"] = floor
     if start_time or end_time:
         time_filter = {}
         try:

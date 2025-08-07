@@ -28,9 +28,9 @@ def generate_sensor_data():
 
     vendorName, vendorEmail = random.choice(vendors)
 
-    # Scenario: 3 buildings (A–C), 50 rooms each
+    # Scenario: 3 buildings (A–C), 4 floors each
     building = random.choice(['A', 'B', 'C'])
-    room = random.randint(1, 50)
+    floor = random.randint(1, 4)
 
     # Humidity generation logic: Gaussian distribution
     config = sensor_config["Humidity"]
@@ -49,7 +49,7 @@ def generate_sensor_data():
         "vendorEmail": vendorEmail,
         "description": "Simulated humidity sensor",
         "building": building,
-        "room": room,
+        "floor": floor,
         "temperature": None,
         "humidity": humidity,
         "soundLevel": None,
