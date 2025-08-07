@@ -12,6 +12,10 @@ This project simulates a multi-sensor system using Docker containers. Each senso
 
 ## Getting Started
 
+### Prerequisites
+- Make sure you have Docker and Docker Compose installed and running on your machine.
+
+### Steps
 1. Clone the repo
 2. Run `docker compose -f docker-compose-mongodb.yml -p mongodb up --build -d`
 3. Monitor sensor data in Mongo Express or query the API
