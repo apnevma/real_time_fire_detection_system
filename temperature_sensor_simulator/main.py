@@ -90,14 +90,13 @@ async def query_sensor_data(
                 time_filter["$gte"] = start_dt.isoformat()
 
             if end_time:
-                # Add 1 day so that the date is inclusive
-                end_dt = datetime.fromisoformat(end_time) + timedelta(days=1)
+                end_dt = datetime.fromisoformat(end_time)
                 time_filter["$lt"] = end_dt.isoformat()
 
             query["timestamp"] = time_filter
 
         except ValueError:
-            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD.")
+            raise HTTPException(status_code=400, detail="Invalid date format. Use YYYY-MM-DD or YYYY-MM-DDTHH:MM:SS")
 
     try:
         skip = (page - 1) * page_size
