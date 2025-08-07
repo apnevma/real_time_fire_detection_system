@@ -18,14 +18,13 @@ sensor_config = {
 }
 
 def generate_sensor_data(building: str, floor: int):
-    vendors = [
-        ("SoundWave Systems", "support@soundwave.com"),
-        ("EchoTrack Inc", "info@echotrack.io"),
-        ("AcoustiCore", "service@acousticore.net"),
-        ("Koufathikame Gr", "info@koufathikame.gr")
-    ]
-
-    vendorName, vendorEmail = random.choice(vendors)
+    # Assign fixed sensor vendor to each building
+    building_vendors = {
+        'A': ("EchoTrack Inc", "info@echotrack.com"),
+        'B': ("AcoustiCore", "service@acousticore.net"),
+        'C': ("Koufathikame Gr", "info@koufathikame.gr")
+    }
+    vendorName, vendorEmail = building_vendors[building]
 
     # Sound Level generation logic: Gaussian distribution
     config = sensor_config["Acoustic"]
@@ -76,7 +75,7 @@ def simulate_posting():
                     print(f"Response: {response.status_code}, {response.json()}")
                 except Exception as e:
                     print(f"Error posting data: {e}")
-        time.sleep(300)  # Post every 5 minutes
+        time.sleep(600)  # Post every 10 minutes
 
 if __name__ == "__main__":
     simulate_posting()

@@ -19,14 +19,13 @@ sensor_config = {
 }
 
 def generate_sensor_data(building: str, floor: int):
-    vendors = [
-        ("ACME Corp", "support@acmecorp.com"),
-        ("CoolTech Inc", "info@cooltech.com"),
-        ("ThermoSense", "contact@thermosense.org"),
-        ("ExoumeSkasei Gr", "service@exoumeskasei.gr")
-    ]
-
-    vendorName, vendorEmail = random.choice(vendors)
+    # Assign fixed sensor vendor to each building
+    building_vendors = {
+        'A': ("ACME Corp", "support@acmecorp.com"),
+        'B': ("ThermoSense", "contact@thermosense.org"),
+        'C': ("ExoumeSkasei Gr", "service@exoumeskasei.gr")
+    }
+    vendorName, vendorEmail = building_vendors[building]
 
     # Temperature generation logic: Gaussian distribution
     config = sensor_config["Temperature"]

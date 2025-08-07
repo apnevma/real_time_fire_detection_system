@@ -19,14 +19,13 @@ sensor_config = {
 }
 
 def generate_sensor_data(building: str, floor: int):
-    vendors = [
-        ("HydroSense", "support@hydrosense.com"),
-        ("AquaMetrics", "contact@aquametrics.org"),
-        ("HumidityPro", "service@humiditypro.com"),
-        ("Kolumpame Gr", "info@kolympame.gr")
-    ]
-
-    vendorName, vendorEmail = random.choice(vendors)
+    # Assign fixed sensor vendor to each building
+    building_vendors = {
+        'A': ("HydroSense", "support@hydrosense.com"),
+        'B': ("AquaMetrics", "contact@aquametrics.org"),
+        'C': ("Kolumpame Gr", "info@kolympame.gr")
+    }
+    vendorName, vendorEmail = building_vendors[building]
 
     # Humidity generation logic: Gaussian distribution
     config = sensor_config["Humidity"]
