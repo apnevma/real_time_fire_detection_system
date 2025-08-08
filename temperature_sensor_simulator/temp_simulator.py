@@ -13,10 +13,12 @@ sensor_config = {
         "min": 16.0,
         "max": 30.0,
         "mean": 22.5,
-        "std": 2.0,
-        "distribution": "normal"
+        "std": 2.0,  # For daily initial value
+        "daily_deviation": 0.4  # Small fluctuations within the same day
     }
 }
+# Remember last temperature reading and date per (building, floor)
+last_temperature_data = {}  # key = (building, floor), value = (temperature, date_string)
 
 def generate_sensor_data(building: str, floor: int):
     # Assign fixed sensor vendor to each building
@@ -27,14 +29,24 @@ def generate_sensor_data(building: str, floor: int):
     }
     vendorName, vendorEmail = building_vendors[building]
 
-    # Temperature generation logic: Gaussian distribution
+    key = (building, floor)
+    now = datetime.now(tz=athens_tz)
+    today_str = now.date().isoformat()
     config = sensor_config["Temperature"]
-    if config["distribution"] == "normal":
+
+    # Temperature generation logic
+    if key not in last_temperature_data or last_temperature_data[key][1] != today_str:
+        # First time or new day → use full normal distribution
         temperature = random.gauss(config["mean"], config["std"])
-        temperature = max(config["min"], min(config["max"], temperature))  # Clamp to [min, max]
     else:
-        temperature = random.uniform(config["min"], config["max"])
-    temperature = round(temperature, 1)
+        # Same day → small fluctuation from last value
+        prev_temperature = last_temperature_data[key][0]
+        temperature = prev_temperature + random.gauss(0, config["daily_deviation"])
+    # Clamp and round
+    temperature = round(max(config["min"], min(config["max"], temperature)), 1)
+
+    # Update last value
+    last_temperature_data[key] = (temperature, today_str)
 
     # Return structured sensor reading
     return {
@@ -76,7 +88,7 @@ def simulate_posting():
                     print(f"Response: {response.status_code}, {response.json()}")
                 except Exception as e:
                     print(f"Error posting data: {e}")
-        time.sleep(600)  # Post every 10 minutes
+        time.sleep(600)  # Post every 10 seconds
 
 if __name__ == "__main__":
     simulate_posting()
