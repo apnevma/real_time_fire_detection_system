@@ -14,9 +14,12 @@ sensor_config = {
         "mean": 60.0,
         "std": 10.0,
         "min": 30.0,
-        "max": 90.0
+        "max": 90.0,
+        "daily_deviation": 3  # Small fluctuations within the same day
     }
 }
+# Remember last humidity reading and date per (building, floor)
+last_humidity_data = {}  # key = (building, floor), value = (humidity, date_string)
 
 def generate_sensor_data(building: str, floor: int):
     # Assign fixed sensor vendor to each building
@@ -27,14 +30,24 @@ def generate_sensor_data(building: str, floor: int):
     }
     vendorName, vendorEmail = building_vendors[building]
 
-    # Humidity generation logic: Gaussian distribution
+    key = (building, floor)
+    now = datetime.now(tz=athens_tz)
+    today_str = now.date().isoformat()
     config = sensor_config["Humidity"]
-    if config["distribution"] == "normal":
+
+    # Humidity generation logic: Gaussian distribution
+    if key not in last_humidity_data or last_humidity_data[key][1] != today_str:
+        # First time or new day → use full normal distribution
         humidity = random.gauss(config["mean"], config["std"])
-        humidity = max(config["min"], min(config["max"], humidity))  # Clamp to [min, max]
     else:
-        humidity = random.uniform(config["min"], config["max"])
-    humidity = round(humidity, 1)
+        # Same day → small fluctuation from last value
+        prev_humidity = last_humidity_data[key][0]
+        humidity = prev_humidity + random.gauss(0, config["daily_deviation"])
+    # Clamp and round
+    humidity = round(max(config["min"], min(config["max"], humidity)), 1)
+
+    # Update last value
+    last_humidity_data[key] = (humidity, today_str)
 
     # Return structured sensor reading
     return {
@@ -76,7 +89,7 @@ def simulate_posting():
                     print(f"Response: {response.status_code}, {response.json()}")
                 except Exception as e:
                     print(f"Error posting data: {e}")
-        time.sleep(600)  # Post every 10 minutes
+        time.sleep(10)  # Post every 10 minutes
 
 if __name__ == "__main__":
     simulate_posting()
