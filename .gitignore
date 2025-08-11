@@ -7,5 +7,5 @@ __pycache__/
 venv/
 
 # Ignore only JSON state files
-temperature_sensor_simulator/state/*.json
-humidity_sensor_simulator/state/*.json
+temperature_sensor_simulator/state/last_temperature.json
+humidity_sensor_simulator/state/last_humidity.json
