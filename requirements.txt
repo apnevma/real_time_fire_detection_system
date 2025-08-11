@@ -5,3 +5,6 @@ pymongo
 requests
 pytz
 python-dateutil
+jinja2
+aiofiles
+python-multipart

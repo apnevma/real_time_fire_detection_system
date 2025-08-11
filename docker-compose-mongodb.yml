@@ -40,7 +40,7 @@ services:
   sensor-api:
     container_name: sensor-api-container
     build:
-      context: ./app
+      context: .
       dockerfile: Dockerfile
     ports:
       - "8000:8000"

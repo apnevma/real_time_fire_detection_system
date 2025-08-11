@@ -9,7 +9,9 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
-COPY main.py db_connect.py sensor_data.json ./
+COPY app ./
+COPY templates ./templates
+COPY static ./static
 
 # Expose the port FastAPI will run on
 EXPOSE 8000

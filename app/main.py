@@ -1,5 +1,7 @@
-from fastapi import FastAPI, HTTPException, Query
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime
@@ -10,9 +12,13 @@ from db_connect import collection
 
 app = FastAPI()
 
-# file path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # This gives the path to main.py
-FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")
+# file paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))       # This gives the path to main.py
+
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))      # folder for HTML files
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), name="static")     # allowas serving to css/js
+
+FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")      # sensor_data.json file path
 
 # Pydantic model
 class SensorData(BaseModel):
@@ -155,3 +161,7 @@ def get_sensor_stats(sensor_type: str):
     }
 
     return JSONResponse(content=stats)
+
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("visualize.html", {"request": request})
