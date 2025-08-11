@@ -67,7 +67,7 @@ services:
       context: ./humidity_sensor_simulator
       dockerfile: Dockerfile.simulator
     volumes:
-      - ./temperature_sensor_simulator/state:/app/state    # Mounts a folder inside the container
+      - ./humidity_sensor_simulator/state:/app/state    # Mounts a folder inside the container
     depends_on:
       - sensor-api
     networks:
