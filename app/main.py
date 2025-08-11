@@ -13,10 +13,10 @@ from db_connect import collection
 app = FastAPI()
 
 # file paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))       # This gives the path to main.py
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))      # folder for HTML files
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), name="static")     # allowas serving to css/js
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), name="static")     # allows serving to css/js
 
 FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")      # sensor_data.json file path
 
