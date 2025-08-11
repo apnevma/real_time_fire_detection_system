@@ -5,3 +5,7 @@ mongodb_data/
 __pycache__/
 *.venv
 venv/
+
+# Ignore only JSON state files
+temperature_sensor_simulator/state/*.json
+humidity_sensor_simulator/state/*.json
