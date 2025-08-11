@@ -4,6 +4,8 @@ import requests
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import os
+import json
 
 athens_tz = ZoneInfo("Europe/Athens") #Athens timezone
 
@@ -18,8 +20,24 @@ sensor_config = {
         "daily_deviation": 3  # Small fluctuations within the same day
     }
 }
-# Remember last humidity reading and date per (building, floor)
-last_humidity_data = {}  # key = (building, floor), value = (humidity, date_string)
+
+STATE_FILE = "state/last_humidity.json"
+os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+
+# Try to load the persisted last_humidity_data
+try:
+    with open(STATE_FILE, "r") as f:
+        last_humidity_data = json.load(f)        
+        # Convert keys back to tuples since JSON keys must be strings
+        last_humidity_data = {
+            eval(k): v for k, v in last_humidity_data.items()
+        }
+    # key = (building, floor), value = (humidity, date_string)
+    print("Last humidity data loaded:")
+    print(last_humidity_data)
+except FileNotFoundError:
+    last_humidity_data = {}
+    print("last_humidity.json file not found!")
 
 def generate_sensor_data(building: str, floor: int):
     # Assign fixed sensor vendor to each building
@@ -43,11 +61,24 @@ def generate_sensor_data(building: str, floor: int):
         # Same day → small fluctuation from last value
         prev_humidity = last_humidity_data[key][0]
         humidity = prev_humidity + random.gauss(0, config["daily_deviation"])
+        print("Small flunctuation! :)")
     # Clamp and round
     humidity = round(max(config["min"], min(config["max"], humidity)), 1)
 
     # Update last value
     last_humidity_data[key] = (humidity, today_str)
+
+    # Save updated  value
+    try:
+        # Convert keys to strings for JSON
+        serializable_data = {
+            str(k): v for k, v in last_humidity_data.items()
+        }
+        with open(STATE_FILE, "w") as f:
+            json.dump(serializable_data, f)
+        print("Updated last value!")
+    except Exception as e:
+        print(f"Failed to persist humidity state: {e}")
 
     # Return structured sensor reading
     return {

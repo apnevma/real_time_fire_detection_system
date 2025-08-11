@@ -35,7 +35,7 @@ try:
     print(last_temperature_data)
 except FileNotFoundError:
     last_temperature_data = {}
-    print("last_temperature.json file not found or empty!")
+    print("last_temperature.json file not found!")
 
 def generate_sensor_data(building: str, floor: int):
     # Assign fixed sensor vendor to each building
@@ -63,7 +63,7 @@ def generate_sensor_data(building: str, floor: int):
         print("Small flunctuation! :)")
     # Clamp and round
     temperature = round(max(config["min"], min(config["max"], temperature)), 1)
-    
+
     # Update last value
     last_temperature_data[key] = (temperature, today_str)
 
@@ -119,7 +119,7 @@ def simulate_posting():
                     print(f"Response: {response.status_code}, {response.json()}")
                 except Exception as e:
                     print(f"Error posting data: {e}")
-        time.sleep(20)  # Post every 10 seconds
+        time.sleep(600)  # Post every 10 seconds
 
 if __name__ == "__main__":
     simulate_posting()
