@@ -1,0 +1,7 @@
+uvicorn
+fastapi
+email-validator
+pymongo
+requests
+pytz
+python-dateutil

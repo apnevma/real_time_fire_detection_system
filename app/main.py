@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime
 import pytz
 import json
 import os
@@ -11,7 +11,7 @@ from db_connect import collection
 app = FastAPI()
 
 # file path
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # This gives the path to temperature_sensor_simulator
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # This gives the path to main.py
 FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")
 
 # Pydantic model
