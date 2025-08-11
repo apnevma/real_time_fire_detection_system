@@ -54,6 +54,8 @@ services:
     build:
       context: ./temperature_sensor_simulator
       dockerfile: Dockerfile.simulator
+    volumes:
+      - ./temperature_sensor_simulator/state:/app/state    # Mounts a folder inside the container
     depends_on:
       - sensor-api
     networks:
@@ -83,6 +85,8 @@ networks:
   mongo-network:
     driver: bridge
 
+volumes:
+  temp_simulator_state:
 
 #deploy with "docker compose -f docker-compose-mongodb.yml -p mongodb up -d"
 #undeploy with "docker compose -f docker-compose-mongodb.yml -p mongodb down"

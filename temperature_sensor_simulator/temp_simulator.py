@@ -4,6 +4,8 @@ import requests
 import time
 from datetime import datetime
 from zoneinfo import ZoneInfo
+import os
+import json
 
 athens_tz = ZoneInfo("Europe/Athens") #Athens timezone
 
@@ -17,8 +19,23 @@ sensor_config = {
         "daily_deviation": 0.4  # Small fluctuations within the same day
     }
 }
-# Remember last temperature reading and date per (building, floor)
-last_temperature_data = {}  # key = (building, floor), value = (temperature, date_string)
+
+STATE_FILE = "state/last_temperature.json"
+os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
+
+# Try to load the persisted last_temperature_data
+try:
+    with open(STATE_FILE, "r") as f:
+        last_temperature_data = json.load(f)
+        # Convert keys back to tuples since JSON keys must be strings
+        last_temperature_data = {
+            eval(k): v for k, v in last_temperature_data.items()
+        }
+    print("Last temperature data loaded:")
+    print(last_temperature_data)
+except FileNotFoundError:
+    last_temperature_data = {}
+    print("last_temperature.json file not found or empty!")
 
 def generate_sensor_data(building: str, floor: int):
     # Assign fixed sensor vendor to each building
@@ -38,15 +55,29 @@ def generate_sensor_data(building: str, floor: int):
     if key not in last_temperature_data or last_temperature_data[key][1] != today_str:
         # First time or new day → use full normal distribution
         temperature = random.gauss(config["mean"], config["std"])
+        print("Big flunctuation! :(")
     else:
         # Same day → small fluctuation from last value
         prev_temperature = last_temperature_data[key][0]
         temperature = prev_temperature + random.gauss(0, config["daily_deviation"])
+        print("Small flunctuation! :)")
     # Clamp and round
     temperature = round(max(config["min"], min(config["max"], temperature)), 1)
-
+    
     # Update last value
     last_temperature_data[key] = (temperature, today_str)
+
+    # Save updated  value
+    try:
+        # Convert keys to strings for JSON
+        serializable_data = {
+            str(k): v for k, v in last_temperature_data.items()
+        }
+        with open(STATE_FILE, "w") as f:
+            json.dump(serializable_data, f)
+        print("Updated last value!")
+    except Exception as e:
+        print(f"Failed to persist temperature state: {e}")
 
     # Return structured sensor reading
     return {
@@ -88,7 +119,7 @@ def simulate_posting():
                     print(f"Response: {response.status_code}, {response.json()}")
                 except Exception as e:
                     print(f"Error posting data: {e}")
-        time.sleep(600)  # Post every 10 seconds
+        time.sleep(20)  # Post every 10 seconds
 
 if __name__ == "__main__":
     simulate_posting()
