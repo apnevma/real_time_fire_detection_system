@@ -9,3 +9,7 @@ venv/
 # Ignore only JSON state files
 temperature_sensor_simulator/state/last_temperature.json
 humidity_sensor_simulator/state/last_humidity.json
+
+.coverage
+coverage.lcov
+coverage/
