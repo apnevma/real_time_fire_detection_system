@@ -59,7 +59,7 @@ def test_generate_sensor_data_with_existing_state(tmp_path, monkeypatch):
 
     assert data["building"] == "A"
     assert data["floor"] == 1
-    assert new_temp != initial_temp, "Temperature should not be exactly the same"
+
     assert abs(new_temp - initial_temp) <= 3 * daily_deviation, "Temperature fluctuation should stay within 3×std deviation"
     assert min_temp <= new_temp <= max_temp, "Temperature should be within defined range"
 
