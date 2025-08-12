@@ -11,5 +11,5 @@ temperature_sensor_simulator/state/last_temperature.json
 humidity_sensor_simulator/state/last_humidity.json
 
 .coverage
-coverage.lcov
+lcov.info
 coverage/
