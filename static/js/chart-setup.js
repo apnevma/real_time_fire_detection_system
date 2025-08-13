@@ -8,6 +8,21 @@ function getRandomColor() {
     return color;
 }
 
+const locationColors = {
+    'A-1': '#630000ff',
+    'A-2': '#d10000ff',
+    'A-3': '#ff7066ff',
+    'A-4': '#ffaa79ff',
+    'B-1': '#000066',
+    'B-2': '#1f48c2ff',
+    'B-3': '#78b2fdff',
+    'B-4': '#72eaffff',
+    'C-1': '#0d3f02ff',
+    'C-2': '#2e8307ff',
+    'C-3': '#77b300',
+    'C-4': '#ace600',
+};
+
 // Add new location block when "add location" button is clicked
 const addBtn = document.getElementById('addLocationBtn');
 
@@ -84,14 +99,16 @@ form.addEventListener('submit', async function (e) {
                 return null;
             });
 
+            const key = `${building}-${floor}`;
+            const color = locationColors[key] || 'black';  // fallback color
+
             datasets.push({
                 label: `${type} - ${building} Floor ${floor}`,
                 data: values,
                 borderWidth: 2,
                 fill: false,
-                borderColor: getRandomColor(),
+                borderColor: color,
                 tension: 0.2,
-                //pointRadius: 0,
                 parsing: {
                     xAxisKey: 'x',
                     yAxisKey: 'y'
