@@ -13,14 +13,20 @@
             <option value="Humidity">Humidity</option>
             <option value="Acoustic">Acoustic</option>
         </select>
-        <label>Building:</label>
-        <select name="building">
-            <option value="A">A</option>
-            <option value="B">B</option>
-            <option value="C">C</option>
-        </select>
-        <label>Floor:</label>
-        <input type="number" name="floor" min="1" max="4">
+        <div id="locationFields">
+                <div class="location-block">
+                    <label>Building:</label>
+                    <select name="building">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                    </select>
+
+                    <label>Floor:</label>
+                    <input type="number" name="floor" min="1" max="4">
+                </div>
+        </div>
+        <button type="button" id="addLocationBtn">Add Location</button>
         <label>Start Time:</label>
         <input type="datetime-local" name="start_time">
         <label>End Time:</label>
