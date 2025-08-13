@@ -47,6 +47,20 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// Remove location block when "remove location" button is clicked
+const removeBtn = document.getElementById('removeLocationBtn')
+
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('removeLocationBtn')?.addEventListener('click', () => {
+        console.log('Remove Location clicked!')
+        const locationFields = document.getElementById('locationFields');
+        const blocks = locationFields.getElementsByClassName('location-block');
+        if (blocks.length > 1) {
+            locationFields.removeChild(blocks[blocks.length -1]);
+        }
+    });
+});
+
 // Plot data when form is submitted
 const form = document.getElementById('filterForm');
 const ctx = document.getElementById('sensorChart').getContext('2d');
