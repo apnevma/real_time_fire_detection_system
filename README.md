@@ -51,6 +51,7 @@ A web dashboard is available to interactively view sensor readings over time.
   - Building (A, B, C)
   - Floor (1–4)
 - Shows time-series line chart of sensor values
+- Allows multiple location (building, floor) data plotting within the same chart
 
 ### Access:
 - Navigate to `http://localhost:8000`  
