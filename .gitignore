@@ -13,3 +13,5 @@ humidity_sensor_simulator/state/last_humidity.json
 .coverage
 lcov.info
 coverage/
+
+.pytest_cache
