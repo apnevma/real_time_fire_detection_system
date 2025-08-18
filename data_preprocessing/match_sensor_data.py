@@ -31,6 +31,13 @@ temperature_df = temperature_df[["building", "floor", "timestamp", "event", "val
 humidity_df = humidity_df[["building", "floor", "timestamp", "event", "value"]].sort_values("timestamp")
 sound_df = sound_df[["building", "floor", "timestamp", "event", "value"]].sort_values("timestamp")
 
+# Function tp determine final event: fire if any sensor says fire, else normal
+def resolve_event(row):
+    if row.get("event_temp") == "fire" or row.get("event_humid") == "fire" or row.get("event_sound") == "fire":
+        return "fire"
+    else:
+        return "normal"
+
 # Prepare for merge_asof by sorting and grouping
 merged_list = []
 
@@ -67,19 +74,15 @@ for _, loc in locations.iterrows():
         "value_temp": "temperature",
         "value_humid": "humidity",
         "value": "soundLevel",
-        "event": "event"
+        "event_temp": "event_temp",
+        "event_humid": "event_humid",
+        "event": "event_sound"  
     })
 
     # Drop rows with any missing sensor readings
     full_merged = full_merged.dropna(subset=["temperature", "humidity", "soundLevel"])
 
-    # Determine final event: fire if any sensor says fire, else normal
-    def resolve_event(row):
-        if row.get("event_temp") == "fire" or row.get("event_humid") == "fire" or row.get("event_sound") == "fire":
-            return "fire"
-        else:
-            return "normal"
-
+    # Resolve event
     full_merged["event"] = full_merged.apply(resolve_event, axis=1)
 
     # Keep only the final cleaned data
