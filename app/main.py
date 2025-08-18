@@ -215,18 +215,25 @@ def get_active_events(building: str = Query(...), floor: int = Query(...)):
 
 @app.get("/fire-status/{building}/{floor}")
 def get_fire_status(building: str, floor: int):
-    fire_map = {
-        ("A", 1): False,
-        ("A", 2): False,
-        ("A", 3): False,
-        ("A", 4): False,
-        ("B", 1): False,
-        ("B", 2): False,
-        ("B", 3): False,
-        ("B", 4): False,
-        ("C", 1): False,
-        ("C", 2): False,
-        ("C", 3): False,
-        ("C", 4): False
-    }
-    return {"fire": fire_map.get((building, floor), False)}
+    try:
+        now = datetime.now(tz=athens_tz)
+
+        # Find all fire events for the location
+        fire_events = events_collection.find({
+            "type": "fire",
+            "building": building,
+            "floor": int(floor)
+        })
+
+        for event in fire_events:
+            # Check if still active (based on duration)
+            start = datetime.fromisoformat(event["start_time"])
+            end = start + timedelta(seconds=event["duration"])
+            if start <= now <= end:
+                return {"fire": True}
+
+        return {"fire": False}
+
+    except Exception as e:
+        print(f"Error fetching fire status: {e}")
+        raise HTTPException(status_code=500, detail="Error checking fire status")
