@@ -1,6 +1,5 @@
 from pymongo import MongoClient
 import pandas as pd
-from datetime import datetime
 
 client = MongoClient("mongodb://root:rootpassword@localhost:27017/")
 db = client["sensor_data_db"]
@@ -14,7 +13,7 @@ print(f"Total documents: {len(docs)}")
 df = pd.DataFrame(docs)
 
 # Keep only useful columns
-df = df[["building", "floor", "type", "timestamp", "temperature", "humidity", "soundLevel"]]
+df = df[["building", "floor", "type", "event", "timestamp", "temperature", "humidity", "soundLevel"]]
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 
 # Split into 3 DataFrames
@@ -28,9 +27,9 @@ humidity_df["value"] = humidity_df["humidity"]
 sound_df["value"] = sound_df["soundLevel"]
 
 # Keep only needed columns
-temperature_df = temperature_df[["building", "floor", "timestamp", "value"]].sort_values("timestamp")
-humidity_df = humidity_df[["building", "floor", "timestamp", "value"]].sort_values("timestamp")
-sound_df = sound_df[["building", "floor", "timestamp", "value"]].sort_values("timestamp")
+temperature_df = temperature_df[["building", "floor", "timestamp", "event", "value"]].sort_values("timestamp")
+humidity_df = humidity_df[["building", "floor", "timestamp", "event", "value"]].sort_values("timestamp")
+sound_df = sound_df[["building", "floor", "timestamp", "event", "value"]].sort_values("timestamp")
 
 # Prepare for merge_asof by sorting and grouping
 merged_list = []
@@ -67,18 +66,30 @@ for _, loc in locations.iterrows():
     full_merged = full_merged.rename(columns={
         "value_temp": "temperature",
         "value_humid": "humidity",
-        "value": "soundLevel"
+        "value": "soundLevel",
+        "event": "event"
     })
 
-    # Drop rows with any missing sensor
+    # Drop rows with any missing sensor readings
     full_merged = full_merged.dropna(subset=["temperature", "humidity", "soundLevel"])
 
-    merged_list.append(full_merged[["temperature", "humidity", "soundLevel"]])
+    # Determine final event: fire if any sensor says fire, else normal
+    def resolve_event(row):
+        if row.get("event_temp") == "fire" or row.get("event_humid") == "fire" or row.get("event_sound") == "fire":
+            return "fire"
+        else:
+            return "normal"
+
+    full_merged["event"] = full_merged.apply(resolve_event, axis=1)
+
+    # Keep only the final cleaned data
+    merged_list.append(full_merged[["temperature", "humidity", "soundLevel", "event"]])
 
 # Final DataFrame
 df = pd.concat(merged_list, ignore_index=True)
 
 print(df.head())
+print(df["event"].value_counts())
 print(f"Total rows in final_df: {len(df)}")
 
 df.to_csv("data_preprocessing/matched_sensor_data.csv")
