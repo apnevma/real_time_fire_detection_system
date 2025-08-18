@@ -40,6 +40,9 @@ except FileNotFoundError:
     print("last_humidity.json file not found!")
 
 def generate_sensor_data(building: str, floor: int):
+    # check for fire
+    fire_mode = check_fire_mode(building, floor)
+
     # Assign fixed sensor vendor to each building
     building_vendors = {
         'A': ("HydroSense", "support@hydrosense.com"),
@@ -53,17 +56,23 @@ def generate_sensor_data(building: str, floor: int):
     today_str = now.date().isoformat()
     config = sensor_config["Humidity"]
 
-    # Humidity generation logic: Gaussian distribution
-    if key not in last_humidity_data or last_humidity_data[key][1] != today_str:
-        # First time or new day → use full normal distribution
-        humidity = random.gauss(config["mean"], config["std"])
+    # Humidity generation logic
+    if fire_mode:
+        humidity = round(random.uniform(10, 30), 1)
+        event = "fire"
+        print("Fire mode active! Sending low humidity readings.")
     else:
-        # Same day → small fluctuation from last value
-        prev_humidity = last_humidity_data[key][0]
-        humidity = prev_humidity + random.gauss(0, config["daily_deviation"])
-        print("Small flunctuation! :)")
-    # Clamp and round
-    humidity = round(max(config["min"], min(config["max"], humidity)), 1)
+        event = "normal"
+        if key not in last_humidity_data or last_humidity_data[key][1] != today_str:
+            # First time or new day → use full normal distribution
+            humidity = random.gauss(config["mean"], config["std"])
+        else:
+            # Same day → small fluctuation from last value
+            prev_humidity = last_humidity_data[key][0]
+            humidity = prev_humidity + random.gauss(0, config["daily_deviation"])
+            print("Small flunctuation! :)")
+        # Clamp and round
+        humidity = round(max(config["min"], min(config["max"], humidity)), 1)
 
     # Update last value
     last_humidity_data[key] = (humidity, today_str)
@@ -84,6 +93,7 @@ def generate_sensor_data(building: str, floor: int):
     return {
         "sensorId": str(uuid.uuid4()),
         "type": "Humidity",
+        "event": event,
         "vendorName": vendorName,
         "vendorEmail": vendorEmail,
         "description": "Simulated humidity sensor",
@@ -106,6 +116,15 @@ def wait_for_api(max_retries=30, delay=2):
             print("Waiting for sensor-api to be ready...")
         time.sleep(delay)
     raise Exception("sensor-api service did not become available in time.")
+
+def check_fire_mode(building, floor):
+    try:
+        response = requests.get(f"http://sensor-api:8000/fire-status/{building}/{floor}")
+        if response.status_code == 200:
+            return response.json().get("fire") == True
+    except Exception as e:
+        print(f"Error checking fire mode: {e}")
+    return False  # Default to normal
 
 def simulate_posting():
     wait_for_api()
