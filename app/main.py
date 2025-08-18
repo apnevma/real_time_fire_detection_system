@@ -168,7 +168,7 @@ async def home(request: Request):
     return templates.TemplateResponse("visualize.html", {"request": request})
 
 @app.get("/fire-status/{building}/{floor}")
-def get_fire_statur(building: str, floor: int):
+def get_fire_status(building: str, floor: int):
     fire_map = {
         ("A", 1): True,
         ("A", 2): False,
