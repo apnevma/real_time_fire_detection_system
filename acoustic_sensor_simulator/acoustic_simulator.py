@@ -17,7 +17,19 @@ sensor_config = {
     }
 }
 
+def check_fire_mode(building, floor):
+    try:
+        response = requests.get(f"http://sensor-api:8000/fire-status/{building}/{floor}")
+        if response.status_code == 200:
+            return response.json().get("fire") == True
+    except Exception as e:
+        print(f"Error checking fire mode: {e}")
+    return False  # Default to normal
+
 def generate_sensor_data(building: str, floor: int):
+    # check for fire
+    fire_mode = check_fire_mode(building, floor)
+
     # Assign fixed sensor vendor to each building
     building_vendors = {
         'A': ("EchoTrack Inc", "info@echotrack.com"),
@@ -26,19 +38,26 @@ def generate_sensor_data(building: str, floor: int):
     }
     vendorName, vendorEmail = building_vendors[building]
 
-    # Sound Level generation logic: Gaussian distribution
-    config = sensor_config["Acoustic"]
-    if config["distribution"] == "normal":
-        soundLevel = random.gauss(config["mean"], config["std"])
-        soundLevel = max(config["min"], min(config["max"], soundLevel))  # Clamp to [min, max]
+    # Sound Level generation logic
+    if fire_mode:
+        soundLevel = round(random.uniform(70, 95), 1)
+        event = "fire"
+        print("Fire mode active! Sending low humidity readings.")
     else:
-        soundLevel = random.uniform(config["min"], config["max"])
-    soundLevel = round(soundLevel, 1)
+        event = "normal"
+        config = sensor_config["Acoustic"]
+        if config["distribution"] == "normal":
+            soundLevel = random.gauss(config["mean"], config["std"])
+            soundLevel = max(config["min"], min(config["max"], soundLevel))  # Clamp to [min, max]
+        else:
+            soundLevel = random.uniform(config["min"], config["max"])
+        soundLevel = round(soundLevel, 1)
 
     # Return structured sensor reading
     return {
         "sensorId": str(uuid.uuid4()),
         "type": "Acoustic",
+        "event": event,
         "vendorName": vendorName,
         "vendorEmail": vendorEmail,
         "description": "Simulated acoustic sensor",
