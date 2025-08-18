@@ -24,6 +24,7 @@ FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")      # sensor_data.json f
 class SensorData(BaseModel):
     sensorId: str
     type: str
+    event: str
     vendorName: str
     vendorEmail: EmailStr
     description: Optional[str]
@@ -165,3 +166,21 @@ def get_sensor_stats(sensor_type: str):
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("visualize.html", {"request": request})
+
+@app.get("/fire-status/{building}/{floor}")
+def get_fire_statur(building: str, floor: int):
+    fire_map = {
+        ("A", 1): True,
+        ("A", 2): False,
+        ("A", 3): False,
+        ("A", 4): False,
+        ("B", 1): False,
+        ("B", 2): False,
+        ("B", 3): False,
+        ("B", 4): False,
+        ("C", 1): False,
+        ("C", 2): False,
+        ("C", 3): False,
+        ("C", 4): False
+    }
+    return {"fire": fire_map.get((building, floor), False)}

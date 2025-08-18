@@ -38,6 +38,9 @@ except FileNotFoundError:
     print("last_temperature.json file not found!")
 
 def generate_sensor_data(building: str, floor: int):
+    # check for fire
+    fire_mode = check_fire_mode(building, floor)
+
     # Assign fixed sensor vendor to each building
     building_vendors = {
         'A': ("ACME Corp", "support@acmecorp.com"),
@@ -52,17 +55,23 @@ def generate_sensor_data(building: str, floor: int):
     config = sensor_config["Temperature"]
 
     # Temperature generation logic
-    if key not in last_temperature_data or last_temperature_data[key][1] != today_str:
-        # First time or new day → use full normal distribution
-        temperature = random.gauss(config["mean"], config["std"])
-        print("Big flunctuation! :(")
+    if fire_mode:
+        temperature = round(random.uniform(55, 80), 1)
+        event = "fire"
+        print("Fire mode active! Sending high temperature.")
     else:
-        # Same day → small fluctuation from last value
-        prev_temperature = last_temperature_data[key][0]
-        temperature = prev_temperature + random.gauss(0, config["daily_deviation"])
-        print("Small flunctuation! :)")
-    # Clamp and round
-    temperature = round(max(config["min"], min(config["max"], temperature)), 1)
+        event = "normal"
+        if key not in last_temperature_data or last_temperature_data[key][1] != today_str:
+            # First time or new day → use full normal distribution
+            temperature = random.gauss(config["mean"], config["std"])
+            print("Big flunctuation! :(")
+        else:
+            # Same day → small fluctuation from last value
+            prev_temperature = last_temperature_data[key][0]
+            temperature = prev_temperature + random.gauss(0, config["daily_deviation"])
+            print("Small flunctuation! :)")
+        # Clamp and round
+        temperature = round(max(config["min"], min(config["max"], temperature)), 1)
 
     # Update last value
     last_temperature_data[key] = (temperature, today_str)
@@ -83,6 +92,7 @@ def generate_sensor_data(building: str, floor: int):
     return {
         "sensorId": str(uuid.uuid4()),
         "type": "Temperature",
+        "event": event,
         "vendorName": vendorName,
         "vendorEmail": vendorEmail,
         "description": "Simulated temperature sensor",
@@ -105,6 +115,15 @@ def wait_for_api(max_retries=30, delay=2):
             print("Waiting for temp-api to be ready...")
         time.sleep(delay)
     raise Exception("temp-api service did not become available in time.")
+
+def check_fire_mode(building, floor):
+    try:
+        response = requests.get(f"http://sensor-api:8000/fire-status/{building}/{floor}")
+        if response.status_code == 200:
+            return response.json().get("fire") == True
+    except Exception as e:
+        print(f"Error checking fire mode: {e}")
+    return False  # Default to normal
 
 def simulate_posting():
     wait_for_api()
