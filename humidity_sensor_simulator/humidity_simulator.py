@@ -74,20 +74,20 @@ def generate_sensor_data(building: str, floor: int):
         # Clamp and round
         humidity = round(max(config["min"], min(config["max"], humidity)), 1)
 
-    # Update last value
-    last_humidity_data[key] = (humidity, today_str)
+        # Update last value
+        last_humidity_data[key] = (humidity, today_str)
 
-    # Save updated  value
-    try:
-        # Convert keys to strings for JSON
-        serializable_data = {
-            str(k): v for k, v in last_humidity_data.items()
-        }
-        with open(STATE_FILE, "w") as f:
-            json.dump(serializable_data, f)
-        print("Updated last value!")
-    except Exception as e:
-        print(f"Failed to persist humidity state: {e}")
+        # Save updated  value
+        try:
+            # Convert keys to strings for JSON
+            serializable_data = {
+                str(k): v for k, v in last_humidity_data.items()
+            }
+            with open(STATE_FILE, "w") as f:
+                json.dump(serializable_data, f)
+            print("Updated last value!")
+        except Exception as e:
+            print(f"Failed to persist humidity state: {e}")
 
     # Return structured sensor reading
     return {

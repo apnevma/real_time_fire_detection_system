@@ -73,20 +73,20 @@ def generate_sensor_data(building: str, floor: int):
         # Clamp and round
         temperature = round(max(config["min"], min(config["max"], temperature)), 1)
 
-    # Update last value
-    last_temperature_data[key] = (temperature, today_str)
+        # Update last value
+        last_temperature_data[key] = (temperature, today_str)
 
-    # Save updated  value
-    try:
-        # Convert keys to strings for JSON
-        serializable_data = {
-            str(k): v for k, v in last_temperature_data.items()
-        }
-        with open(STATE_FILE, "w") as f:
-            json.dump(serializable_data, f)
-        print("Updated last value!")
-    except Exception as e:
-        print(f"Failed to persist temperature state: {e}")
+        # Save updated  value
+        try:
+            # Convert keys to strings for JSON
+            serializable_data = {
+                str(k): v for k, v in last_temperature_data.items()
+            }
+            with open(STATE_FILE, "w") as f:
+                json.dump(serializable_data, f)
+            print("Updated last value!")
+        except Exception as e:
+            print(f"Failed to persist temperature state: {e}")
 
     # Return structured sensor reading
     return {
