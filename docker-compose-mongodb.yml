@@ -83,6 +83,16 @@ services:
     networks:
       - mongo-network
 
+  events-simulator:
+    container_name: events-simulator-container
+    build:
+      context: ./events_simulator
+      dockerfile: Dockerfile.simulator
+    depends_on:
+      - sensor-api
+    networks:
+      - mongo-network
+
 networks:
   mongo-network:
     driver: bridge

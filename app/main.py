@@ -4,11 +4,15 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 import pytz
 import json
 import os
-from db_connect import collection
+from db_connect import collection, events_collection
+from zoneinfo import ZoneInfo
+
+# Timezone setup
+athens_tz = ZoneInfo("Europe/Athens")
 
 app = FastAPI()
 
@@ -20,7 +24,7 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), nam
 
 FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")      # sensor_data.json file path
 
-# Pydantic model
+# Pydantic models
 class SensorData(BaseModel):
     sensorId: str
     type: str
@@ -33,6 +37,13 @@ class SensorData(BaseModel):
     temperature: Optional[float] = None
     humidity: Optional[float] = None
     soundLevel: Optional[float] = None
+
+class Event(BaseModel):
+    type: str
+    building: str
+    floor: int
+    start_time: str 
+    duration: int       # In seconds
 
 @app.post("/sensor-data/")
 async def receive_sensor_data(data: SensorData):
@@ -69,6 +80,16 @@ async def receive_sensor_data(data: SensorData):
         print(f"File Write Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to save data to file")
     
+
+@app.post("/events")
+async def receive_event(event: Event):
+    event_dict = event.model_dump()
+    try:
+        events_collection.insert_one(event_dict)
+        return {"message": "Event stored successfully"}
+    except Exception as e:
+        print("Failed to save event!")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.get("/sensor-data/")
 async def query_sensor_data(
@@ -167,10 +188,35 @@ def get_sensor_stats(sensor_type: str):
 async def home(request: Request):
     return templates.TemplateResponse("visualize.html", {"request": request})
 
+# Returns currently active events for a given building and floor.
+@app.get("/events/active")
+def get_active_events(building: str = Query(...), floor: int = Query(...)):
+    now = datetime.now(tz=athens_tz)
+
+    # Find events whose time range includes `now`
+    events = events_collection.find({
+        "building": building,
+        "floor": floor,
+        "start_time": {"$lte": now.isoformat()}
+    })
+
+    active_events = []
+    for event in events:
+        try:
+            start_time = datetime.fromisoformat(event["start_time"])
+            end_time = start_time + timedelta(seconds=event["duration"])
+            if now <= end_time:
+                event["_id"] = str(event["_id"])
+                active_events.append(event)
+        except Exception as e:
+            print(f"Error parsing event time: {e}")
+
+    return JSONResponse(content=active_events)
+
 @app.get("/fire-status/{building}/{floor}")
 def get_fire_status(building: str, floor: int):
     fire_map = {
-        ("A", 1): True,
+        ("A", 1): False,
         ("A", 2): False,
         ("A", 3): False,
         ("A", 4): False,
