@@ -90,9 +90,10 @@ for _, loc in locations.iterrows():
 
 # Final DataFrame
 df = pd.concat(merged_list, ignore_index=True)
+df = df[["temperature", "humidity", "soundLevel", "event"]]
 
 print(df.head())
 print(df["event"].value_counts())
 print(f"Total rows in final_df: {len(df)}")
 
-df.to_csv("data_preprocessing/matched_sensor_data.csv")
+df.to_csv("ML/matched_sensor_data.csv")
