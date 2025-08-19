@@ -11,7 +11,8 @@ athens_tz = ZoneInfo("Europe/Athens")
 event_types_probabilities = {
     "fire": 0.05,  # 5% chance
 }
-max_duration_seconds = 3600  # 1 hour
+max_duration_seconds = 3600  # 2 hours
+min_duration_seconds = 300  # 5 minutes
 
 def is_location_available(building, floor):
     try:
@@ -37,7 +38,7 @@ def wait_for_api(max_retries=30, delay=2):
         time.sleep(delay)
     raise Exception("temp-api service did not become available in time.")
 
-def generate_random_event(building, floor, event_types_probabilities, max_duration_seconds=300):
+def generate_random_event(building, floor, event_types_probabilities, min_duration_seconds, max_duration_seconds):
     now = datetime.now(tz=athens_tz)
 
     if not is_location_available(building, floor):
@@ -46,7 +47,7 @@ def generate_random_event(building, floor, event_types_probabilities, max_durati
     
     for event_type, prob in event_types_probabilities.items():
         if random.random() < prob:
-            duration = random.randint(60, max_duration_seconds)
+            duration = random.randint(min_duration_seconds, max_duration_seconds)
             event = {
                 "type": event_type,
                 "building": building,
@@ -66,7 +67,7 @@ def simulate_posting():
         # Scenario: 3 buildings (A–C), 4 floors each
         for building in ['A', 'B', 'C']:    # Buildings A, B, C
             for floor in range(1, 5):  # Floors 1 to 4
-                event = generate_random_event(building, floor, event_types_probabilities)
+                event = generate_random_event(building, floor, event_types_probabilities, min_duration_seconds, max_duration_seconds)
                 if event:
                     try:
                         response = requests.post("http://sensor-api:8000/events/", json=event)

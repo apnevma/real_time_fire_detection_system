@@ -94,7 +94,7 @@ def simulate_posting():
                     print(f"Response: {response.status_code}, {response.json()}")
                 except Exception as e:
                     print(f"Error posting data: {e}")
-        time.sleep(600)  # Post every 10 minutes
+        time.sleep(300)  # Post every 5 minutes
 
 if __name__ == "__main__":
     simulate_posting()

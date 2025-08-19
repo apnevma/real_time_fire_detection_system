@@ -11,3 +11,7 @@ events_collection = db["events"]
 collection.create_index([("type", ASCENDING)])
 collection.create_index([("building", ASCENDING)])
 collection.create_index([("timestamp", ASCENDING)])
+
+events_collection.create_index([("type", ASCENDING)])
+events_collection.create_index([("building", ASCENDING)])
+events_collection.create_index([("start_time", ASCENDING)])
