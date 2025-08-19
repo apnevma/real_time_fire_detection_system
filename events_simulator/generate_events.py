@@ -9,7 +9,7 @@ athens_tz = ZoneInfo("Europe/Athens")
 
 # Config
 event_types_probabilities = {
-    "fire": 0.30,  # 30% chance
+    "fire": 0.10,  # 10% chance
 }
 max_duration_seconds = 3600  # 2 hours
 min_duration_seconds = 300  # 5 minutes
