@@ -57,7 +57,7 @@ for _, loc in locations.iterrows():
         t_df, h_df,
         on="timestamp",
         direction="nearest",
-        tolerance=pd.Timedelta("5min"),
+        tolerance=pd.Timedelta("3min"),
         suffixes=("_temp", "_humid")
     )
 
@@ -66,7 +66,7 @@ for _, loc in locations.iterrows():
         th_merged, s_df,
         on="timestamp",
         direction="nearest",
-        tolerance=pd.Timedelta("5min")
+        tolerance=pd.Timedelta("3min")
     )
 
     # Rename for clarity
