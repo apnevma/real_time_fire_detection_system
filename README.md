@@ -38,6 +38,12 @@ To make simulation more realistic:
 
 This behavior ensures that readings over the same day change gradually, imitating real-world sensor behavior and avoiding unrealistic spikes.
 
+## Event Simulation (Fire Mode)
+
+The system includes a probabilistic event simulator that currently generates fire events. Each location (building + floor) has a small chance (default 5%) of entering a fire state.
+
+- Active fire events are stored in a MongoDB events collection.
+- When a location is under an active fire event, all three sensor simulators (temperature, humidity, and acoustic) adjust their behavior to generate abnormal readings.
 
 ## Data Visualization Dashboard
 
@@ -57,6 +63,31 @@ A web dashboard is available to interactively view sensor readings over time.
 - Navigate to `http://localhost:8000`  
 - Select the filters and press "Load Data" to view the chart
 
+## Machine Learning for Fire Detection
+
+A basic machine learning pipeline has been added to detect fire events based on sensor data.
+
+### Data Preprocessing
+- Sensor readings from different simulators are matched by building, floor, and approximate timestamp to form a combined dataset.
+- The resulting dataset includes: temperature, humidity, soundLevel, and the event label ("normal" or "fire").
+- This is saved to ML/matched_sensor_data.csv.
+
+### Models Trained
+
+#### 1. Random Forest Classifier
+- Trained on the preprocessed dataset
+- Handles class imbalance using class_weight="balanced"
+- Evaluated using accuracy, confusion matrix, and feature importance
+
+#### 2. Neural Network
+- A simple feedforward model with:
+  - Two hidden layers (16 and 8 neurons)
+  - ReLU activations and sigmoid output
+- Uses binary cross-entropy loss
+- Features normalized using StandardScaler
+- Evaluated on 20% test set with validation split during training
+
+Both models achieved high accuracy on the current dataset, showing that the simulated features are highly predictive of fire events.
 
 ## Getting Started
 
@@ -71,5 +102,7 @@ A web dashboard is available to interactively view sensor readings over time.
 ## Endpoints
 
 - `POST /sensor-data/`: Send sensor reading
+- `POST /events/`: Send event to database
 - `GET /sensor-data/`: Query sensor data by sensor_type, location or timestamp
 - `GET /sensors/stats/{sensor_type}`: Get sensor statistics (min, max, mean, top10_min, top10_max)
+- `GET /events/active`: Retrive currently active fire events (used by simulators to determine fire mode)
