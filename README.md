@@ -11,7 +11,8 @@ This project simulates a multi-sensor system using Docker containers. Each senso
 - Docker Compose setup
 - Persistent state tracking for realistic fluctuations
 - Interactive dashboard for visualization
-
+- Fire event simulation via central event system
+- Machine Learning: Fire detection using Random Forest and Neural Network classifiers
 
 ## Sensor Data Simulation
 
