@@ -1,6 +1,6 @@
 # Sensor System
 
-This project simulates a multi-sensor system using Docker containers. Each sensor (temperature, humidity, acoustic) runs in its own container and sends data to a central API, which stores it in a MongoDB database.
+This project simulates a multi-sensor environment using Docker containers. It includes an **AI-powered fire detection system** that analyzes temperature, humidity, and acoustic data in real-time to predict and track fire events. Each sensor type (temperature, humidity, acoustic) runs in its own container and sends data to a central FastAPI server, which stores it in a MongoDB database and triggers alerts when abnormal conditions are detected.
 
 ## Features
 
@@ -13,6 +13,7 @@ This project simulates a multi-sensor system using Docker containers. Each senso
 - Interactive dashboard for visualization
 - Fire event simulation via central event system
 - Machine Learning: Fire detection using Random Forest and Neural Network classifiers
+- Alerting system with fire alert lifecycle tracking
 
 ## Sensor Data Simulation
 
@@ -46,24 +47,6 @@ The system includes a probabilistic event simulator that currently generates fir
 - Active fire events are stored in a MongoDB events collection.
 - When a location is under an active fire event, all three sensor simulators (temperature, humidity, and acoustic) adjust their behavior to generate abnormal readings.
 
-## Data Visualization Dashboard
-
-A web dashboard is available to interactively view sensor readings over time.
-
-### Dashboard features:
-- Built with FastAPI and Jinja2 templates
-- Powered by Chart.js
-- Allows you to filter by:
-  - Sensor type (Temperature, Humidity, Acoustic)
-  - Building (A, B, C)
-  - Floor (1–4)
-- Shows time-series line chart of sensor values
-- Allows multiple location (building, floor) data plotting within the same chart
-
-### Access:
-- Navigate to `http://localhost:8000`  
-- Select the filters and press "Load Data" to view the chart
-
 ## Machine Learning for Fire Detection
 
 A basic machine learning pipeline has been added to detect fire events based on sensor data.
@@ -89,6 +72,45 @@ A basic machine learning pipeline has been added to detect fire events based on 
 - Evaluated on 20% test set with validation split during training
 
 Both models achieved high accuracy on the current dataset, showing that the simulated features are highly predictive of fire events.
+
+## AI-Powered Fire Detection System
+
+Sensor readings are used by a real-time fire prediction engine inside the FastAPI server.
+
+### Prediction Flow
+
+- For every sensor reading received:
+  - Collect recent readings of all 3 types from the same location
+  - If all are available, form a feature vector
+  - Use the trained model to predict fire (`normal` or `fire`)
+
+### Smart Alerting System
+
+- If a fire is predicted:
+  - An alert is inserted into the `alerts` collection **only once**
+  - It includes `building`, `floor`, `detected_at`, and the raw sensor values
+- When sensors return to normal:
+  - The existing alert is **updated** with an `ended_at` timestamp
+
+This avoids spammy multiple alerts and gives a full timeline of the fire event.
+
+## Data Visualization Dashboard
+
+A web dashboard is available to interactively view sensor readings over time.
+
+### Dashboard features:
+- Built with FastAPI and Jinja2 templates
+- Powered by Chart.js
+- Allows you to filter by:
+  - Sensor type (Temperature, Humidity, Acoustic)
+  - Building (A, B, C)
+  - Floor (1–4)
+- Shows time-series line chart of sensor values
+- Allows multiple location (building, floor) data plotting within the same chart
+
+### Access:
+- Navigate to `http://localhost:8000`  
+- Select the filters and press "Load Data" to view the chart
 
 ## Getting Started
 
