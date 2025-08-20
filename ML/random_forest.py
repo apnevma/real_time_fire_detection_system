@@ -54,7 +54,6 @@ plt.title('Confusion Matrix')
 plt.tight_layout()
 plt.show()
 
-
 importances = classifier.feature_importances_
 features = X.columns
 
