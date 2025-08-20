@@ -41,10 +41,10 @@ def generate_sensor_data(building: str, floor: int):
     # Sound Level generation logic
     if fire_mode:
         soundLevel = round(random.uniform(70, 95), 1)
-        event = "fire"
+        #event = "fire"
         print("Fire mode active! Sending low humidity readings.")
     else:
-        event = "normal"
+        #event = "normal"
         config = sensor_config["Acoustic"]
         if config["distribution"] == "normal":
             soundLevel = random.gauss(config["mean"], config["std"])
@@ -57,7 +57,7 @@ def generate_sensor_data(building: str, floor: int):
     return {
         "sensorId": str(uuid.uuid4()),
         "type": "Acoustic",
-        "event": event,
+        #"event": event,
         "vendorName": vendorName,
         "vendorEmail": vendorEmail,
         "description": "Simulated acoustic sensor",

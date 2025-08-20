@@ -13,6 +13,11 @@ COPY app ./
 COPY templates ./templates
 COPY static ./static
 
+# Copy trained models
+COPY ML/models/rf_model.pkl ML/models/rf_model.pkl
+COPY ML/models/scaler.pkl ML/models/scaler.pkl
+COPY ML/models/nn_model.keras ML/models/nn_model.keras
+
 # Expose the port FastAPI will run on
 EXPOSE 8000
 

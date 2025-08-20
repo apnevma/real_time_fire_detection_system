@@ -59,10 +59,10 @@ def generate_sensor_data(building: str, floor: int):
     # Humidity generation logic
     if fire_mode:
         humidity = round(random.uniform(10, 30), 1)
-        event = "fire"
+        #event = "fire"
         print("Fire mode active! Sending low humidity readings.")
     else:
-        event = "normal"
+        #event = "normal"
         if key not in last_humidity_data or last_humidity_data[key][1] != today_str:
             # First time or new day → use full normal distribution
             humidity = random.gauss(config["mean"], config["std"])
@@ -93,7 +93,7 @@ def generate_sensor_data(building: str, floor: int):
     return {
         "sensorId": str(uuid.uuid4()),
         "type": "Humidity",
-        "event": event,
+        #"event": event,
         "vendorName": vendorName,
         "vendorEmail": vendorEmail,
         "description": "Simulated humidity sensor",

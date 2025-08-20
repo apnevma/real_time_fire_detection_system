@@ -8,8 +8,9 @@ from datetime import datetime, timedelta
 import pytz
 import json
 import os
-from db_connect import collection, events_collection
+from db_connect import collection, events_collection, alerts_collection
 from zoneinfo import ZoneInfo
+import joblib
 
 # Timezone setup
 athens_tz = ZoneInfo("Europe/Athens")
@@ -23,12 +24,15 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))      
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), name="static")     # allows serving to css/js
 
 FILE_PATH = os.path.join(BASE_DIR, "sensor_data.json")      # sensor_data.json file path
+rf_model_path = os.path.join("ML", "models", "rf_model.pkl")
+
+# Load ML Models
+rf_model = joblib.load(rf_model_path)
 
 # Pydantic models
 class SensorData(BaseModel):
     sensorId: str
     type: str
-    event: str
     vendorName: str
     vendorEmail: EmailStr
     description: Optional[str]
@@ -48,37 +52,75 @@ class Event(BaseModel):
 @app.post("/sensor-data/")
 async def receive_sensor_data(data: SensorData):
     sensor_dict = data.model_dump()
+
     # Save timestamp to local timezone, instead of UTC
     local_tz = pytz.timezone("Europe/Athens")  
-    sensor_dict["timestamp"] = datetime.now(local_tz).isoformat()
+    now = datetime.now(local_tz).isoformat()
+    sensor_dict["timestamp"] = now
 
+    # Save to MongoDB
     try:
-        # Save to JSON file
-        if os.path.exists(FILE_PATH):
-            with open(FILE_PATH, "r", encoding="utf-8") as f:
-                try:
-                    all_data = json.load(f)
-                except json.JSONDecodeError:
-                    all_data = []
-        else:
-            all_data = []
-
-        all_data.append(sensor_dict)
-
-        with open(FILE_PATH, "w", encoding="utf-8") as f:
-            json.dump(all_data, f, indent=2)
-
-        # Save to MongoDB
         result = collection.insert_one(sensor_dict)
-
-        return {
-            "message": "Data received and saved to file and MongoDB",
-            "id": str(result.inserted_id)
-        }
-            
     except Exception as e:
         print(f"File Write Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to save data to file")
+    
+    # Attempt Fire Detection
+    try:
+        # Look for 3 recent readings (temperature, humidity, soundLevel)
+        window_start = datetime.now(local_tz) - timedelta(minutes=1)
+        query = {
+            "building": data.building,
+            "floor": data.floor,
+            "timestamp": {"$gte": window_start.isoformat()}
+        }
+        recent = list(collection.find(query))
+
+        # Group by sensor type
+        latest = {d["type"]: d for d in recent}
+
+        if {"Temperature", "Humidity", "Acoustic"}.issubset(latest):
+            # Extract feature vector
+            temp = latest["Temperature"]["temperature"]
+            hum = latest["Humidity"]["humidity"]
+            sound = latest["Acoustic"]["soundLevel"]
+
+            features = [[temp, hum, sound]]
+
+            # Make prediction
+            prediction = rf_model.predict(features)[0]  
+            predicted_label = "fire" if prediction == 1 else "normal"       # 1 = fire, 0 = normal
+
+            print(f"Prediction for {data.building}-{data.floor}: {predicted_label.upper()}")
+
+            # Save Fire predictions to alerts collection
+            if prediction == 1:
+                alerts_collection.insert_one({
+                    "building": data.building,
+                    "floor": data.floor,
+                    "detected_at": now,
+                    "type": "fire",
+                    "source": "model_prediction",
+                    "sensor_data": {
+                        "temperature": temp,
+                        "humidity": hum,
+                        "soundLevel": sound
+                    }
+                })
+
+            return {
+                "message": "Data saved and prediction made",
+                "prediction": predicted_label,
+                "id": str(result.inserted_id)
+            }
+        
+    except Exception as e:
+        print(f"Prediction Error: {e}")
+    
+    return {
+        "message": "Data saved (prediction skipped or not enough data)",
+        "id": str(result.inserted_id)
+    }
     
 
 @app.post("/events")

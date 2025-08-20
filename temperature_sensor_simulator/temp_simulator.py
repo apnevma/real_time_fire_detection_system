@@ -57,10 +57,10 @@ def generate_sensor_data(building: str, floor: int):
     # Temperature generation logic
     if fire_mode:
         temperature = round(random.uniform(55, 80), 1)
-        event = "fire"
+        #event = "fire"
         print("Fire mode active! Sending high temperature.")
     else:
-        event = "normal"
+        #event = "normal"
         if key not in last_temperature_data or last_temperature_data[key][1] != today_str:
             # First time or new day → use full normal distribution
             temperature = random.gauss(config["mean"], config["std"])
@@ -92,7 +92,7 @@ def generate_sensor_data(building: str, floor: int):
     return {
         "sensorId": str(uuid.uuid4()),
         "type": "Temperature",
-        "event": event,
+        #"event": event,
         "vendorName": vendorName,
         "vendorEmail": vendorEmail,
         "description": "Simulated temperature sensor",
