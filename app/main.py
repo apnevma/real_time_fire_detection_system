@@ -93,20 +93,42 @@ async def receive_sensor_data(data: SensorData):
 
             print(f"Prediction for {data.building}-{data.floor}: {predicted_label.upper()}")
 
+            # Look for an existing fire alert without an ended_at timestamp
+            existing_alert = alerts_collection.find_one({
+                "building": data.building,
+                "floor": data.floor,
+                "type": "fire",
+                "ended_at": {"$exists": False}
+                })
             # Save Fire predictions to alerts collection
             if prediction == 1:
-                alerts_collection.insert_one({
-                    "building": data.building,
-                    "floor": data.floor,
-                    "detected_at": now,
-                    "type": "fire",
-                    "source": "model_prediction",
-                    "sensor_data": {
-                        "temperature": temp,
-                        "humidity": hum,
-                        "soundLevel": sound
-                    }
-                })
+                if not existing_alert:
+                    alerts_collection.insert_one({
+                        "building": data.building,
+                        "floor": data.floor,
+                        "detected_at": now,
+                        "type": "fire",
+                        "source": "model_prediction",
+                        "sensor_data": {
+                            "temperature": temp,
+                            "humidity": hum,
+                            "soundLevel": sound
+                        }
+                    })
+                    print("New fire alert inserted!")
+                else:
+                    print("Fire already ongoing — no new alert inserted.")
+
+            elif prediction == 0:
+                if existing_alert:
+                    # Fire has ended — update alert with ended_at timestamp
+                    alerts_collection.update_one(
+                        {"_id": existing_alert["_id"]},
+                        {"$set": {"ended_at": now}}
+                    )
+                    print("Fire alert closed with ended_at.")
+                else:
+                    print("No ongoing fire alert to close.")
 
             return {
                 "message": "Data saved and prediction made",
