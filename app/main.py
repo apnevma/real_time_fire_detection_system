@@ -5,7 +5,6 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, timedelta
-import pytz
 import os
 from db_connect import sensor_readings_collection, events_collection, alerts_collection
 from zoneinfo import ZoneInfo
@@ -53,7 +52,7 @@ class Event(BaseModel):
 
 
 @app.post("/sensor-data/")
-async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
+async def receive_sensor_data(data: SensorData):
     sensor_dict = data.model_dump()
 
     # Save timestamp to local timezone, instead of UTC
@@ -69,85 +68,13 @@ async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
     
     # Attempt Fire Detection
     try:
-        # Look for 3 recent readings (temperature, humidity, soundLevel)
-        window_start = datetime.now(local_tz) - timedelta(minutes=1)
-        query = {
-            "building": data.building,
-            "floor": data.floor,
-            "timestamp": {"$gte": window_start.isoformat()}
-        }
-        recent = list(sensor_readings_collection.find(query))
-
-        # Group by sensor type
-        latest = {d["type"]: d for d in recent}
-
-        if {"Temperature", "Humidity", "Acoustic"}.issubset(latest):
-            # Extract feature vector
-            temp = latest["Temperature"]["temperature"]
-            hum = latest["Humidity"]["humidity"]
-            sound = latest["Acoustic"]["soundLevel"]
-
-            features = [[temp, hum, sound]]
-
-            # Make prediction with chosen model
-            if model_name == "nn_model":
-                scaled_features = scaler.transform(features)        # Scale input (only for NN)
-                prediction = (nn_model.predict(scaled_features)[0] > 0.5).astype("int32")
-            else:
-                prediction = rf_model.predict(features)[0]
-            
-            predicted_label = "fire" if prediction == 1 else "normal"       # 1 = fire, 0 = normal
-
-            print(f"Prediction for {data.building}-{data.floor}: {predicted_label.upper()}")
-
-            # Look for an existing fire alert without an ended_at timestamp
-            existing_alert = alerts_collection.find_one({
-                "building": data.building,
-                "floor": data.floor,
-                "type": "fire",
-                "ended_at": {"$exists": False}
-                })
-            # Save Fire predictions to alerts collection
-            if prediction == 1:
-                if not existing_alert:
-                    alerts_collection.insert_one({
-                        "building": data.building,
-                        "floor": data.floor,
-                        "detected_at": now,
-                        "type": "fire",
-                        "source": model_name,
-                        "sensor_data": {
-                            "temperature": temp,
-                            "humidity": hum,
-                            "soundLevel": sound
-                        }
-                    })
-                    print("New fire alert inserted!")
-                else:
-                    print("Fire already ongoing — no new alert inserted.")
-
-            elif prediction == 0:
-                if existing_alert:
-                    # Fire has ended — update alert with ended_at timestamp
-                    alerts_collection.update_one(
-                        {"_id": existing_alert["_id"]},
-                        {"$set": {"ended_at": now}}
-                    )
-                    print("Fire alert closed with ended_at.")
-                else:
-                    print("No ongoing fire alert to close.")
-
-            return {
-                "message": "Data saved and prediction made",
-                "prediction": predicted_label,
-                "id": str(result.inserted_id)
-            }
-        
+        model_name = "nn_model"
+        live_fire_detection(result, data, now, model_name)
     except Exception as e:
         print(f"Prediction Error: {e}")
     
     return {
-        "message": "Data saved (prediction skipped or not enough data)",
+        "message": "Data saved",
         "id": str(result.inserted_id)
     }
     
@@ -319,3 +246,79 @@ def get_fire_status(building: str, floor: int):
     except Exception as e:
         print(f"Error fetching fire status: {e}")
         raise HTTPException(status_code=500, detail="Error checking fire status")
+
+# Predict fire status    
+def live_fire_detection(result, data: SensorData, now, model_name:str = "nn_model"):
+        # Look for 3 recent readings (temperature, humidity, soundLevel)
+        window_start = datetime.now(local_tz) - timedelta(minutes=1)
+        query = {
+            "building": data.building,
+            "floor": data.floor,
+            "timestamp": {"$gte": window_start.isoformat()}
+        }
+        recent = list(sensor_readings_collection.find(query))
+
+        # Group by sensor type
+        latest = {d["type"]: d for d in recent}
+
+        if {"Temperature", "Humidity", "Acoustic"}.issubset(latest):
+            # Extract feature vector
+            temp = latest["Temperature"]["temperature"]
+            hum = latest["Humidity"]["humidity"]
+            sound = latest["Acoustic"]["soundLevel"]
+
+            features = [[temp, hum, sound]]
+
+            # Make prediction with chosen model
+            if model_name == "nn_model":
+                scaled_features = scaler.transform(features)        # Scale input (only for NN)
+                prediction = (nn_model.predict(scaled_features)[0] > 0.5).astype("int32")
+            else:
+                prediction = rf_model.predict(features)[0]
+            
+            predicted_label = "fire" if prediction == 1 else "normal"       # 1 = fire, 0 = normal
+
+            print(f"Prediction for {data.building}-{data.floor}: {predicted_label.upper()}")
+
+            # Look for an existing fire alert without an ended_at timestamp
+            existing_alert = alerts_collection.find_one({
+                "building": data.building,
+                "floor": data.floor,
+                "type": "fire",
+                "ended_at": {"$exists": False}
+                })
+            # Save Fire predictions to alerts collection
+            if prediction == 1:
+                if not existing_alert:
+                    alerts_collection.insert_one({
+                        "building": data.building,
+                        "floor": data.floor,
+                        "detected_at": now,
+                        "type": "fire",
+                        "source": model_name,
+                        "sensor_data": {
+                            "temperature": temp,
+                            "humidity": hum,
+                            "soundLevel": sound
+                        }
+                    })
+                    print("New fire alert inserted!")
+                else:
+                    print("Fire already ongoing — no new alert inserted.")
+
+            elif prediction == 0:
+                if existing_alert:
+                    # Fire has ended — update alert with ended_at timestamp
+                    alerts_collection.update_one(
+                        {"_id": existing_alert["_id"]},
+                        {"$set": {"ended_at": now}}
+                    )
+                    print("Fire alert closed with ended_at.")
+                else:
+                    print("No ongoing fire alert to close.")
+
+            return {
+                "message": "Prediction made",
+                "prediction": predicted_label,
+                "id": str(result.inserted_id)
+            }
