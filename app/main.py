@@ -116,7 +116,7 @@ async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
                         "floor": data.floor,
                         "detected_at": now,
                         "type": "fire",
-                        "source": "model_prediction",
+                        "source": model_name,
                         "sensor_data": {
                             "temperature": temp,
                             "humidity": hum,
