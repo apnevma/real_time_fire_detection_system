@@ -6,11 +6,11 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, timedelta
 import pytz
-import json
 import os
 from db_connect import collection, events_collection, alerts_collection
 from zoneinfo import ZoneInfo
 import joblib
+from keras.models import load_model
 
 # Timezone setup
 athens_tz = ZoneInfo("Europe/Athens")
@@ -24,9 +24,13 @@ templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))      
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), name="static")     # allows serving to css/js
 
 rf_model_path = os.path.join("ML", "models", "rf_model.pkl")
+nn_model_path = os.path.join("ML", "models", "nn_model.keras")
+scaler_path = os.path.join("ML", "models", "scaler.pkl")
 
 # Load ML Models
 rf_model = joblib.load(rf_model_path)
+nn_model = load_model(nn_model_path)
+scaler = joblib.load(scaler_path)
 
 # Pydantic models
 class SensorData(BaseModel):
@@ -49,7 +53,7 @@ class Event(BaseModel):
     duration: int       # In seconds
 
 @app.post("/sensor-data/")
-async def receive_sensor_data(data: SensorData):
+async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
     sensor_dict = data.model_dump()
 
     # Save timestamp to local timezone, instead of UTC
@@ -86,8 +90,13 @@ async def receive_sensor_data(data: SensorData):
 
             features = [[temp, hum, sound]]
 
-            # Make prediction
-            prediction = rf_model.predict(features)[0]  
+            # Make prediction with chosen model
+            if model_name == "nn_model":
+                scaled_features = scaler.transform(features)        # Scale input (only for NN)
+                prediction = nn_model.predict(scaled_features)[0] 
+            else:
+                prediction = rf_model.predict(features)[0]
+            
             predicted_label = "fire" if prediction == 1 else "normal"       # 1 = fire, 0 = normal
 
             print(f"Prediction for {data.building}-{data.floor}: {predicted_label.upper()}")
