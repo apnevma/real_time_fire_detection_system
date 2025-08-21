@@ -6,6 +6,7 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, timedelta
 import os
+import math
 from db_connect import sensor_readings_collection, events_collection, alerts_collection
 from zoneinfo import ZoneInfo
 import joblib
@@ -128,6 +129,7 @@ async def query_sensor_data(
     try:
         skip = (page - 1) * page_size
         results = list(sensor_readings_collection.find(query).skip(skip).limit(page_size))
+        total_results = sensor_readings_collection.count_documents(query)
         
         # Convert ObjectId to string
         for r in results:
@@ -136,6 +138,8 @@ async def query_sensor_data(
         return {
             "page": page,
             "page_size": page_size,
+            "total_results": total_results,
+            "total_pages": math.ceil(total_results / page_size),
             "results": results
         }
 
@@ -218,6 +222,8 @@ def get_active_events(page: int = 1, page_size: int = 10):
     return {
         "page": page,
         "page_size": page_size,
+        "total_results": len(active_events),
+        "total_pages": math.ceil(len(active_events) / page_size),
         "results": paginated_results
         }
     
