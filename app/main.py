@@ -12,22 +12,21 @@ from zoneinfo import ZoneInfo
 import joblib
 from keras.models import load_model
 
-# Timezone setup
-athens_tz = ZoneInfo("Europe/Athens")
-
 app = FastAPI()
 
-# file paths
+# Timezone setup
+local_tz = ZoneInfo("Europe/Athens")
+
+# Setup for sensor data visualization
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))      # Set directory for HTML templates
+app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), name="static")     # Serve static assets (CSS, JS)
 
-templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))      # folder for HTML files
-app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR,"static")), name="static")     # allows serving to css/js
-
+# ML model paths
 rf_model_path = os.path.join("ML", "models", "rf_model.pkl")
 nn_model_path = os.path.join("ML", "models", "nn_model.keras")
 scaler_path = os.path.join("ML", "models", "scaler.pkl")
-
-# Load ML Models
+# Load ML models
 rf_model = joblib.load(rf_model_path)
 nn_model = load_model(nn_model_path)
 scaler = joblib.load(scaler_path)
@@ -58,7 +57,6 @@ async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
     sensor_dict = data.model_dump()
 
     # Save timestamp to local timezone, instead of UTC
-    local_tz = pytz.timezone("Europe/Athens")  
     now = datetime.now(local_tz).isoformat()
     sensor_dict["timestamp"] = now
 
@@ -267,7 +265,7 @@ async def home(request: Request):
 # Returns currently active events
 @app.get("/events/active")
 def get_active_events(page: int = 1, page_size: int = 10):
-    now = datetime.now(tz=athens_tz)
+    now = datetime.now(tz=local_tz)
 
     # Find events whose time range includes `now`
     events = events_collection.find({"start_time": {"$lte": now.isoformat()}})
@@ -300,7 +298,7 @@ def get_active_events(page: int = 1, page_size: int = 10):
 @app.get("/fire-status/{building}/{floor}")
 def get_fire_status(building: str, floor: int):
     try:
-        now = datetime.now(tz=athens_tz)
+        now = datetime.now(tz=local_tz)
 
         # Find all fire events for the location
         fire_events = events_collection.find({
