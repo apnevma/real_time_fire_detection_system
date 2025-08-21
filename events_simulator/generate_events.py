@@ -9,22 +9,19 @@ athens_tz = ZoneInfo("Europe/Athens")
 
 # Config
 event_types_probabilities = {
-    "fire": 0.04,  # 4% chance
+    "fire": 0.1,  # 10% chance
 }
 max_duration_seconds = 7200  # 2 hours
 min_duration_seconds = 300  # 5 minutes
-
-def is_location_available(building, floor):
+    
+def check_fire_status(building, floor):
     try:
-        url = f"http://sensor-api:8000/events/active?building={building}&floor={floor}"
-        response = requests.get(url)
-        response.raise_for_status()
-        active_events = response.json()
-        return len(active_events) == 0
+        response = requests.get(f"http://sensor-api:8000/fire-status/{building}/{floor}")
+        if response.status_code == 200:
+            return response.json().get("fire") == True
     except Exception as e:
         print(f"Failed to check active events for {building} Floor {floor}: {e}")
-        # Default to assuming location is not available to be safe
-        return False
+    return False  # Default to normal
 
 def wait_for_api(max_retries=30, delay=2):
     for _ in range(max_retries):
@@ -41,8 +38,8 @@ def wait_for_api(max_retries=30, delay=2):
 def generate_random_event(building, floor, event_types_probabilities, min_duration_seconds, max_duration_seconds):
     now = datetime.now(tz=athens_tz)
 
-    if not is_location_available(building, floor):
-        print(f"Skipping {building} Floor {floor} (active event exists)")
+    if check_fire_status(building, floor):
+        print(f"Skipping {building} Floor {floor} (active fire exists)")
         return
     
     for event_type, prob in event_types_probabilities.items():

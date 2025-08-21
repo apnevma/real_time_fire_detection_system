@@ -39,7 +39,7 @@ except FileNotFoundError:
 
 def generate_sensor_data(building: str, floor: int):
     # check for fire
-    fire_mode = check_fire_mode(building, floor)
+    fire_mode = check_fire_status(building, floor)
 
     # Assign fixed sensor vendor to each building
     building_vendors = {
@@ -116,13 +116,13 @@ def wait_for_api(max_retries=30, delay=2):
         time.sleep(delay)
     raise Exception("temp-api service did not become available in time.")
 
-def check_fire_mode(building, floor):
+def check_fire_status(building, floor):
     try:
         response = requests.get(f"http://sensor-api:8000/fire-status/{building}/{floor}")
         if response.status_code == 200:
             return response.json().get("fire") == True
     except Exception as e:
-        print(f"Error checking fire mode: {e}")
+        print(f"Failed to check active events for {building} Floor {floor}: {e}")
     return False  # Default to normal
 
 def simulate_posting():

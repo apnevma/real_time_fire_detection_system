@@ -52,6 +52,7 @@ class Event(BaseModel):
     start_time: str 
     duration: int       # In seconds
 
+
 @app.post("/sensor-data/")
 async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
     sensor_dict = data.model_dump()
@@ -163,6 +164,7 @@ async def receive_event(event: Event):
         print("Failed to save event!")
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.get("/sensor-data/")
 async def query_sensor_data(
     type: Optional[str] = Query(None, description="Temperature, Humidity or Acoustic"),
@@ -256,22 +258,19 @@ def get_sensor_stats(sensor_type: str):
 
     return JSONResponse(content=stats)
 
+
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse("visualize.html", {"request": request})
 
-# Returns currently active events for a given building and floor.
+
+# Returns currently active events
 @app.get("/events/active")
-def get_active_events(building: str = Query(...), floor: int = Query(...)):
+def get_active_events(page: int = 1, page_size: int = 10):
     now = datetime.now(tz=athens_tz)
 
     # Find events whose time range includes `now`
-    events = events_collection.find({
-        "building": building,
-        "floor": floor,
-        "start_time": {"$lte": now.isoformat()}
-    })
-
+    events = events_collection.find({"start_time": {"$lte": now.isoformat()}})
     active_events = []
     for event in events:
         try:
@@ -283,7 +282,20 @@ def get_active_events(building: str = Query(...), floor: int = Query(...)):
         except Exception as e:
             print(f"Error parsing event time: {e}")
 
-    return JSONResponse(content=active_events)
+    if len(active_events) == 0:
+        return "There are no active events currently  :)"
+    
+    # Apply pagination
+    start = (page - 1) * page_size
+    end = start + page_size
+    paginated_results = active_events[start:end]
+        
+    return {
+        "page": page,
+        "page_size": page_size,
+        "results": paginated_results
+        }
+    
 
 @app.get("/fire-status/{building}/{floor}")
 def get_fire_status(building: str, floor: int):
