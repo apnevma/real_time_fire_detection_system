@@ -7,7 +7,7 @@ from typing import Optional
 from datetime import datetime, timedelta
 import pytz
 import os
-from db_connect import collection, events_collection, alerts_collection
+from db_connect import sensor_readings_collection, events_collection, alerts_collection
 from zoneinfo import ZoneInfo
 import joblib
 from keras.models import load_model
@@ -63,7 +63,7 @@ async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
 
     # Save to MongoDB
     try:
-        result = collection.insert_one(sensor_dict)
+        result = sensor_readings_collection.insert_one(sensor_dict)
     except Exception as e:
         print(f"File Write Error: {e}")
         raise HTTPException(status_code=500, detail="Failed to save data to file")
@@ -77,7 +77,7 @@ async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
             "floor": data.floor,
             "timestamp": {"$gte": window_start.isoformat()}
         }
-        recent = list(collection.find(query))
+        recent = list(sensor_readings_collection.find(query))
 
         # Group by sensor type
         latest = {d["type"]: d for d in recent}
@@ -200,7 +200,7 @@ async def query_sensor_data(
 
     try:
         skip = (page - 1) * page_size
-        results = list(collection.find(query).skip(skip).limit(page_size))
+        results = list(sensor_readings_collection.find(query).skip(skip).limit(page_size))
         
         # Convert ObjectId to string
         for r in results:
@@ -231,7 +231,7 @@ def get_sensor_stats(sensor_type: str):
     sensor_field = valid_sensor_types[sensor_type]
 
     # Get readings from MongoDB
-    readings = list(collection.find({"type":sensor_type}))
+    readings = list(sensor_readings_collection.find({"type":sensor_type}))
 
     if not readings:
         raise HTTPException(status_code=404, detail=f"No data found for sensor type: {sensor_type}")
