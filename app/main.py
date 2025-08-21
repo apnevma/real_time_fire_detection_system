@@ -93,7 +93,7 @@ async def receive_sensor_data(data: SensorData, model_name: str="nn_model"):
             # Make prediction with chosen model
             if model_name == "nn_model":
                 scaled_features = scaler.transform(features)        # Scale input (only for NN)
-                prediction = nn_model.predict(scaled_features)[0] 
+                prediction = (nn_model.predict(scaled_features)[0] > 0.5).astype("int32")
             else:
                 prediction = rf_model.predict(features)[0]
             
