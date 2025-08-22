@@ -3,12 +3,28 @@ const banner = document.getElementById("fire-alert-banner");
 // Connect to WebSocket server
 const socket = new WebSocket(`ws://${window.location.host}/ws/alerts`);
 
+// empty array to hold incoming incoming fire alerts
+const alertQueue = [];
+
 socket.onopen = function() {
     console.log("WebSocket connection opened!");
 };
 
 socket.onmessage = function(event) {
     const alert = JSON.parse(event.data);
+    console.log("Received Alert!");
+    alertQueue.push(alert);
+
+    if (alertQueue.length === 1) {
+        showNextAlert();
+    }
+};
+
+function showNextAlert() {
+    if (alertQueue.length === 0) return;
+
+    console.log("Showing Alert!");
+    const alert = alertQueue[0];
 
     Swal.fire({
     icon: 'warning',
@@ -19,12 +35,17 @@ socket.onmessage = function(event) {
       <strong>Detected at:</strong> ${alert.detected_at}
     `,
     confirmButtonText: 'Got it!',
-    background: '#fff0f0',
+    timer: 60000,
+    timerProgressBar: true,
+    background: '#fddedeff',
     showClass: {
       popup: 'swal2-show animate__animated animate__shakeX'
     }
+  }).then(() => {
+    alertQueue.shift();
+    showNextAlert();
   });
-};
+}
 
 socket.onerror = function(error) {
     console.error("WebSocket error:", error);

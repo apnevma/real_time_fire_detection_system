@@ -9,9 +9,9 @@ athens_tz = ZoneInfo("Europe/Athens")
 
 # Config
 event_types_probabilities = {
-    "fire": 0.1,  # 10% chance
+    "fire": 0.05,  # 5% chance
 }
-max_duration_seconds = 7200  # 2 hours
+max_duration_seconds = 3600  # 1 hour
 min_duration_seconds = 300  # 5 minutes
     
 def check_fire_status(building, floor):
