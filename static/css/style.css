@@ -1,3 +1,107 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f7f9fc;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+h2 {
+    text-align: center;
+    padding-top: 20px;
+    font-size: 28px;
+}
+
+form {
+    background: #ffffff;
+    padding: 20px 30px;
+    margin: 30px auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    max-width: 900px;
+}
+
+.form-columns {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.form-column {
+    flex: 1;
+    min-width: 300px;
+}
+
+.building-floor-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+form button {
+    margin-top: 10px;
+    margin-right: 10px;
+}
+
+form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: 500;
+}
+
+form input,
+form select {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+}
+
+button {
+    margin-top: 15px;
+    padding: 10px 15px;
+    background-color: #3d8fa8;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #155d91;
+}
+
+/* Subtle buttons like Add/Remove Location */
+.subtle-button {
+    background-color: #e0e0e0;
+    color: #333;
+    border: 1px solid #ccc;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.subtle-button:hover {
+    background-color: #d5d5d5;
+}
+
+.chart-container {
+    padding: 30px;
+    max-width: 1000px;
+    margin: auto;
+}
+
 .swal2-popup {
   border-radius: 20px !important;
 }

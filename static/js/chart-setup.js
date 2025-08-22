@@ -33,15 +33,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const newBlock = document.createElement('div');
         newBlock.classList.add('location-block');
         newBlock.innerHTML = `
-            <label>Building:</label>
-            <select name="building">
-                <option value="A">A</option>
-                <option value="B">B</option>
-                <option value="C">C</option>
-            </select>
-
-            <label>Floor:</label>
-            <input type="number" name="floor" min="1" max="4">
+            <div class="building-floor-row">
+                <div class="form-group">
+                    <label>Building:</label>
+                    <select name="building">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Floor:</label>
+                    <input type="number" name="floor" min="1" max="4">
+                </div>
+            </div>
         `;
         locationFields.appendChild(newBlock);
     });
