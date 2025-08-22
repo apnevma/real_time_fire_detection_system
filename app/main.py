@@ -2,6 +2,8 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi import WebSocket, WebSocketDisconnect
+import asyncio
 from pydantic import BaseModel, EmailStr
 from typing import Optional
 from datetime import datetime, timedelta
@@ -30,6 +32,8 @@ scaler_path = os.path.join("ML", "models", "scaler.pkl")
 rf_model = joblib.load(rf_model_path)
 nn_model = load_model(nn_model_path)
 scaler = joblib.load(scaler_path)
+
+active_connections = []
 
 # Pydantic models
 class SensorData(BaseModel):
@@ -70,7 +74,7 @@ async def receive_sensor_data(data: SensorData):
     # Attempt Fire Detection
     try:
         model_name = "nn_model"
-        live_fire_detection(result, data, now, model_name)
+        await live_fire_detection(result, data, now, model_name)
     except Exception as e:
         print(f"Prediction Error: {e}")
     
@@ -253,8 +257,31 @@ def get_fire_status(building: str, floor: int):
         print(f"Error fetching fire status: {e}")
         raise HTTPException(status_code=500, detail="Error checking fire status")
 
+
+@app.websocket("/ws/alerts")
+async def alert_websocket(websocket: WebSocket):
+    print("WebSocket endpoint hit! :)")
+    await websocket.accept()
+    active_connections.append(websocket)
+    try:
+        while True:
+            await asyncio.sleep(10)  # keep connection alive
+    except WebSocketDisconnect:
+        active_connections.remove(websocket)
+        print("WebSocket client disconnected.")
+
+
+async def notify_clients(alert: dict):
+    for conn in active_connections:
+        try:
+            await conn.send_json(alert)
+            print("Alert sent to websocket:", alert)
+        except Exception as e:
+            print(f"WebSocket send error: {e}")
+
+
 # Predict fire status    
-def live_fire_detection(result, data: SensorData, now, model_name:str = "nn_model"):
+async def live_fire_detection(result, data: SensorData, now, model_name:str = "nn_model"):
         # Look for 3 recent readings (temperature, humidity, soundLevel)
         window_start = datetime.now(local_tz) - timedelta(minutes=1)
         query = {
@@ -296,7 +323,7 @@ def live_fire_detection(result, data: SensorData, now, model_name:str = "nn_mode
             # Save Fire predictions to alerts collection
             if prediction == 1:
                 if not existing_alert:
-                    alerts_collection.insert_one({
+                    alert = {
                         "building": data.building,
                         "floor": data.floor,
                         "detected_at": now,
@@ -307,8 +334,11 @@ def live_fire_detection(result, data: SensorData, now, model_name:str = "nn_mode
                             "humidity": hum,
                             "soundLevel": sound
                         }
-                    })
+                    }
+                    alerts_collection.insert_one(alert)
                     print("New fire alert inserted!")
+                    alert["_id"] = str(result.inserted_id)
+                    await notify_clients(alert)
                 else:
                     print("Fire already ongoing — no new alert inserted.")
 

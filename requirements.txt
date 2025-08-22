@@ -3,7 +3,6 @@ fastapi
 email-validator
 pymongo
 requests
-pytz
 python-dateutil
 jinja2
 aiofiles
@@ -11,3 +10,4 @@ python-multipart
 tensorflow
 joblib
 scikit-learn
+uvicorn[standard]
