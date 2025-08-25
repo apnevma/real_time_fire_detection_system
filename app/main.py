@@ -297,11 +297,11 @@ async def live_fire_detection(result, data: SensorData, now, model_name:str = "n
 
         if {"Temperature", "Humidity", "Acoustic"}.issubset(latest):
             # Extract feature vector
-            temp = latest["Temperature"]["temperature"]
-            hum = latest["Humidity"]["humidity"]
-            sound = latest["Acoustic"]["soundLevel"]
+            temperature = latest["Temperature"]["temperature"]
+            humidity = latest["Humidity"]["humidity"]
+            soundLevel = latest["Acoustic"]["soundLevel"]
 
-            features = [[temp, hum, sound]]
+            features = [[temperature, humidity, soundLevel]]
 
             # Make prediction with chosen model
             if model_name == "nn_model":
@@ -331,9 +331,9 @@ async def live_fire_detection(result, data: SensorData, now, model_name:str = "n
                         "type": "fire",
                         "source": model_name,
                         "sensor_data": {
-                            "temperature": temp,
-                            "humidity": hum,
-                            "soundLevel": sound
+                            "temperature": temperature,
+                            "humidity": humidity,
+                            "soundLevel": soundLevel
                         }
                     }
                     alerts_collection.insert_one(alert)
