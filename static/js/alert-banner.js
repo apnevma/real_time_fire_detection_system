@@ -1,3 +1,5 @@
+const { DateTime } = luxon;
+
 const banner = document.getElementById("fire-alert-banner");
 
 // Connect to WebSocket server
@@ -26,13 +28,15 @@ function showNextAlert() {
     console.log("Showing Alert!");
     const alert = alertQueue[0];
 
+    const readableTime = DateTime.fromISO(alert.detected_at).toLocaleString(DateTime.DATETIME_MED);
+
     Swal.fire({
     icon: 'warning',
     title: '🔥 FIRE ALERT!',
     html: `
       <strong>Building:</strong> ${alert.building}<br>
       <strong>Floor:</strong> ${alert.floor}<br>
-      <strong>Detected at:</strong> ${alert.detected_at}
+      <strong>Detected at:</strong> ${readableTime}
     `,
     confirmButtonText: 'Got it!',
     timer: 60000,
