@@ -173,6 +173,7 @@ def get_sensor_stats(sensor_type: str):
         raise HTTPException(status_code=404, detail=f"No numeric values found for {sensor_type}")
     
     values.sort()
+    unique_values = list(set(values))
 
     stats = {
         "sensorType": sensor_type,
@@ -180,8 +181,8 @@ def get_sensor_stats(sensor_type: str):
         "max": values[-1],
         "range": values[-1] - values[0],
         "mean": round(sum(values) / len(values)),
-        "top10_max": sorted(values, reverse=True)[:10],
-        "top10_min": values[:10]
+        "top10_max": sorted(unique_values, reverse=True)[:10],
+        "top10_min": sorted(unique_values)[:10]
     }
 
     return JSONResponse(content=stats)
