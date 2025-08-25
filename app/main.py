@@ -56,6 +56,12 @@ class Event(BaseModel):
     duration: int       # In seconds
 
 
+# Visualize sensor data
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    return templates.TemplateResponse("visualize.html", {"request": request})
+
+
 @app.post("/sensor-data/")
 async def receive_sensor_data(data: SensorData):
     sensor_dict = data.model_dump()
@@ -83,17 +89,6 @@ async def receive_sensor_data(data: SensorData):
         "id": str(result.inserted_id)
     }
     
-
-@app.post("/events")
-async def receive_event(event: Event):
-    event_dict = event.model_dump()
-    try:
-        events_collection.insert_one(event_dict)
-        return {"message": "Event stored successfully"}
-    except Exception as e:
-        print("Failed to save event!")
-        raise HTTPException(status_code=500, detail=str(e))
-
 
 @app.get("/sensor-data/")
 async def query_sensor_data(
@@ -152,7 +147,7 @@ async def query_sensor_data(
         raise HTTPException(status_code=500, detail="Failed to query sensor data")
     
 
-@app.get("/sensors/stats/{sensor_type}")
+@app.get("/sensor-data/stats/{sensor_type}")
 def get_sensor_stats(sensor_type: str):
     valid_sensor_types = {
         "Temperature": "temperature",
@@ -192,9 +187,15 @@ def get_sensor_stats(sensor_type: str):
     return JSONResponse(content=stats)
 
 
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    return templates.TemplateResponse("visualize.html", {"request": request})
+@app.post("/events")
+async def receive_event(event: Event):
+    event_dict = event.model_dump()
+    try:
+        events_collection.insert_one(event_dict)
+        return {"message": "Event stored successfully"}
+    except Exception as e:
+        print("Failed to save event!")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 # Returns currently active events
