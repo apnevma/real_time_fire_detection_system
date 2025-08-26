@@ -43,8 +43,7 @@ This behavior ensures that readings over the same day change gradually, imitatin
 ## Event Simulation (Fire Mode)
 
 The system includes a probabilistic event simulator that currently generates fire events. Each location (building + floor) has a small chance (default 5%) of entering a fire state.
-
-- Active fire events are stored in a MongoDB events collection.
+- Fire events are stored in a MongoDB events collection.
 - When a location is under an active fire event, all three sensor simulators (temperature, humidity, and acoustic) adjust their behavior to generate abnormal readings.
 
 ## Machine Learning for Fire Detection
@@ -52,9 +51,16 @@ The system includes a probabilistic event simulator that currently generates fir
 A basic machine learning pipeline has been added to detect fire events based on sensor data.
 
 ### Data Preprocessing
-- Sensor readings from different simulators are matched by building, floor, and approximate timestamp to form a combined dataset.
-- The resulting dataset includes: temperature, humidity, soundLevel, and the event label ("normal" or "fire").
-- This is saved to ML/matched_sensor_data.csv.
+Instead of labeling the data after collection, the system generated labeled sensor data for a predifined period (several simulated days). During this time:
+* Each sensor reading was automatically tagged with a corresponding label:
+  - 'fire' if a fire event was active at the location and timestamp.
+  - 'normal' otherwise.
+* This labeling was added directly into each document in the sensor_readings collection in MongoDB, demonstrating the flexibility of a schema-less database.
+
+Later, this labeled data was extracted and transformed into training samples: 
+  - Sensor readings from different simulators are matched by building, floor, and approximate timestamp to form a combined dataset.
+  - The resulting dataset includes: temperature, humidity, soundLevel, and the event label ("normal" or "fire").
+  - This is saved to ML/matched_sensor_data.csv.
 
 ### Models Trained
 
