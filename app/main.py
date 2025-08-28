@@ -259,6 +259,8 @@ def get_fire_status(building: str, floor: int):
         print(f"Error fetching fire status: {e}")
         raise HTTPException(status_code=500, detail="Error checking fire status")
 
+
+# Returns active alerts
 async def get_active_alerts():
     now = datetime.now(tz=local_tz)
     # Find events whose time range includes `now` and don't have the "ended_at" field
