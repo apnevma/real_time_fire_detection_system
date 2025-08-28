@@ -1,4 +1,4 @@
-# Sensor System
+# Real-Time Fire Detection System
 
 This project simulates a multi-sensor environment using Docker containers. It includes an **AI-powered fire detection system** that analyzes temperature, humidity, and acoustic data in real-time to predict and track fire events. Each sensor type (temperature, humidity, acoustic) runs in its own container and sends data to a central FastAPI server, which stores it in a MongoDB database and triggers alerts when abnormal conditions are detected.
 
