@@ -127,6 +127,7 @@ A web dashboard is available to interactively view sensor readings over time.
 1. Clone the repo
 2. Run `docker compose -f docker-compose-mongodb.yml -p mongodb up --build -d`
 3. Monitor sensor data in Mongo Express or query the API
+4. To access Mongo Expess navigate to `http://localhost:8081`. Credentials are "admin" and "pass".
 
 ## Endpoints
 
