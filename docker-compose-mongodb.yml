@@ -11,6 +11,7 @@ services:
       - ./mongodb_data:/data/db
     networks:
       - mongo-network
+      
   mongo-express:
     image: mongo-express:latest
     container_name: mongo-express-container
@@ -24,16 +25,6 @@ services:
       - mongodb
     networks:
       - mongo-network
-
-#  node-app:
-#    build: ./node-app
-#    container_name: node-app-container
-#    ports:
-#      - "3000:3000"
-#    depends_on:
-#      - mongodb
-#    networks:
-#     - mongo-network
 
   sensor-api:
     container_name: sensor-api-container
