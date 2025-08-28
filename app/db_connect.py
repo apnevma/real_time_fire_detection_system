@@ -19,3 +19,4 @@ events_collection.create_index([("building", ASCENDING)])
 events_collection.create_index([("start_time", ASCENDING)])
 
 alerts_collection.create_index([("type", ASCENDING)])
+alerts_collection.create_index([("detected_at", ASCENDING)])

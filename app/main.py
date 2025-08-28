@@ -259,13 +259,34 @@ def get_fire_status(building: str, floor: int):
         print(f"Error fetching fire status: {e}")
         raise HTTPException(status_code=500, detail="Error checking fire status")
 
+async def get_active_alerts():
+    now = datetime.now(tz=local_tz)
+    # Find events whose time range includes `now` and don't have the "ended_at" field
+    active_alerts = alerts_collection.find({
+        "detected_at": {"$lte": now.isoformat()},
+        "ended_at": {"$exists": False}
+    })
+    results = []
+    for alert in active_alerts:
+        alert["_id"] = str(alert["_id"])  # make ObjectId JSON serializable
+        results.append(alert)
+    return results
+
 
 @app.websocket("/ws/alerts")
 async def alert_websocket(websocket: WebSocket):
     print("WebSocket endpoint hit! :)")
     await websocket.accept()
     active_connections.append(websocket)
+
     try:
+        # On connect, send currently active alerts
+        active_alerts = await get_active_alerts()
+        if active_alerts:
+            for alert in active_alerts:
+                await notify_clients(alert)
+
+        # Keep listening for new alerts pushed elsewhere
         while True:
             await asyncio.sleep(10)  # keep connection alive
     except WebSocketDisconnect:
