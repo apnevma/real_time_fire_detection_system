@@ -9,10 +9,12 @@ from typing import Optional
 from datetime import datetime, timedelta
 import os
 import math
+import numpy as np
 from db_connect import sensor_readings_collection, events_collection, alerts_collection
 from zoneinfo import ZoneInfo
 import joblib
 from keras.models import load_model
+import requests
 
 app = FastAPI()
 
@@ -329,8 +331,21 @@ async def live_fire_detection(result, data: SensorData, now, model_name:str = "n
 
             # Make prediction with chosen model
             if model_name == "nn_model":
-                scaled_features = scaler.transform(features)        # Scale input (only for NN)
-                prediction = (nn_model.predict(scaled_features)[0] > 0.5).astype("int32")
+                model_input = {"instances": features}
+
+                # Send request to TF Serving
+                response = requests.post(
+                    "http://tf-serving:8501/v1/models/fire_nn:predict",
+                    json=model_input
+                )
+
+                if response.status_code != 200:
+                    raise RuntimeError(f"TF Serving error: {response.text}")
+
+                # Extract prediction
+                pred_value = np.array(response.json()["predictions"])[0][0]
+                #prediction = int(pred_value > 0.5)
+                prediction = (pred_value > 0.5).astype("int32")
             else:
                 prediction = rf_model.predict(features)[0]
             
