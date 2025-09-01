@@ -35,6 +35,7 @@ services:
       - "8000:8000"
     depends_on:
       - mongodb
+      - tf-serving
     networks:
       - mongo-network
 
@@ -91,6 +92,8 @@ services:
       - MODEL_NAME=fire_nn
     volumes:
       - ./ML/models/fire_nn:/models/fire_nn
+    networks:
+      - mongo-network
 
 networks:
   mongo-network:
