@@ -344,7 +344,6 @@ async def live_fire_detection(result, data: SensorData, now, model_name:str = "n
 
                 # Extract prediction
                 pred_value = np.array(response.json()["predictions"])[0][0]
-                #prediction = int(pred_value > 0.5)
                 prediction = (pred_value > 0.5).astype("int32")
             else:
                 prediction = rf_model.predict(features)[0]
