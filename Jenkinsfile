@@ -22,8 +22,8 @@ pipeline {
             steps {
                 script {
                     docker.build('fire-test-image', '-f Dockerfile.testing .').inside {
-                    sh "pytest temperature_sensor_simulator/tests/ --junitxml=report_temp.xml || true"
-                    sh "pytest humidity_sensor_simulator/tests/ --junitxml=report_humidity.xml || true"
+                    sh "PYTHONPATH=. pytest temperature_sensor_simulator/tests/ --junitxml=report_temp.xml || true"
+                    sh "PYTHONPATH=. pytest humidity_sensor_simulator/tests/ --junitxml=report_humidity.xml || true"
                     }
                 }
             }
