@@ -4,30 +4,34 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                // Checkout your GitHub repo into Jenkins workspace
                 git branch: 'main', url: 'https://github.com/apnevma/real_time_fire_detection_system.git'
             }
         }
-        stage('Build Docker Conatiners') {
+
+        stage('Build Docker Containers') {
             steps {
                 // Run docker compose from the repo root so relative paths work
                 dir("${env.WORKSPACE}") {
                     echo "Building and starting Docker containers..."
                     sh 'docker compose -f docker-compose-mongodb.yml -p mongodb up --build -d'
                 }
+            }
         }
+
         stage('Deploy') {
             steps {
-                echo "No deployment step yet: skipping"
+                echo "No deployment step yet — skipping."
             }
         }
     }
+
     post {
         success {
-            echo "Pipeline finished successfully!"
+            echo "Pipeline finished successfully"
         }
         failure {
-            echo "Pipeline failed :("
+            echo "Pipeline failed"
         }
     }
-}
 }
