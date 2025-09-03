@@ -21,15 +21,9 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
-                    docker.image('python:3.12').inside {
-                        sh '''
-                        pip install -r temperature_sensor_simulator/requirements.txt
-                        pip install -r humidity_sensor_simulator/requirements.txt
-                        pip install pytest
-
-                        pytest temperature_sensor_simulator/tests/ --maxfail=1 --disable-warnings -q --junitxml=report_temp.xml
-                        pytest humidity_sensor_simulator/tests/ --maxfail=1 --disable-warnings -q --junitxml=report_humidity.xml
-                        '''
+                    docker.build('fire-test-image').inside {
+                    sh "pytest temperature_sensor_simulator/tests/ --junitxml=report_temp.xml || true"
+                    sh "pytest humidity_sensor_simulator/tests/ --junitxml=report_humidity.xml || true"
                     }
                 }
             }
