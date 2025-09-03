@@ -66,7 +66,7 @@ Later, this labeled data was extracted and transformed into training samples:
 
 #### 1. Random Forest Classifier
 - Trained on the preprocessed dataset
-- Handles class imbalance using class_weight="balanced"
+- Handles class imbalance using `class_weight="balanced"`
 - Evaluated using accuracy, confusion matrix, and feature importance
 
 #### 2. Neural Network
@@ -74,21 +74,25 @@ Later, this labeled data was extracted and transformed into training samples:
   - Two hidden layers (16 and 8 neurons)
   - ReLU activations and sigmoid output
 - Uses binary cross-entropy loss
-- Features normalized using StandardScaler
-- Evaluated on 20% test set with validation split during training
+- Features normalized during training
+- Exported in TensorFlow SavedModel format for TF Serving (`ML/models/fire_nn/1`)
 
 Both models achieved high accuracy on the current dataset, showing that the simulated features are highly predictive of fire events.
 
 ## AI-Powered Fire Detection System
 
-Sensor readings are used by a real-time fire prediction engine inside the FastAPI server.
+  - **Random Forest** is loaded in-memory by the FastAPI backend for live predictions.
+  - **Neural Network** is served separately via TensorFlow Serving on port **8501**, accessed through REST API calls from the FastAPI backend.
 
 ### Prediction Flow
 
 - For every sensor reading received:
   - Collect recent readings of all 3 types from the same location
   - If all are available, form a feature vector
-  - Use the trained model to predict fire (`normal` or `fire`)
+  - Route to the selected model:
+    * Random Forest → FastAPI backend
+    * Neural Network → TF Serving REST endpoint (`/v1/models/fire_nn:predict`)
+  - Receive prediction: `normal` or `fire`
 
 ### Smart Alerting System
 
