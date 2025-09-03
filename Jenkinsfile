@@ -39,8 +39,6 @@ pipeline {
         always {
             junit 'report.xml'
         }
-    }
-    post {
         success {
             echo "Pipeline finished successfully"
         }
