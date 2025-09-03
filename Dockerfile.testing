@@ -2,9 +2,10 @@ FROM python:3.12-slim
 
 WORKDIR /app
 
-COPY temperature_sensor_simulator/requirements.txt .
-COPY humidity_sensor_simulator/requirements.txt .
+# Copy and rename so paths are simple
+COPY temperature_sensor_simulator/requirements.txt temp_requirements.txt
+COPY humidity_sensor_simulator/requirements.txt humidity_requirements.txt
 
-RUN pip install --no-cache-dir -r temperature_sensor_simulator/requirements.txt
-RUN pip install --no-cache-dir -r humidity_sensor_simulator/requirements.txt
+RUN pip install --no-cache-dir -r temp_requirements.txt
+RUN pip install --no-cache-dir -r humidity_requirements.txt
 RUN pip install --no-cache-dir pytest
