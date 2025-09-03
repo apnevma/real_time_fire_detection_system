@@ -20,25 +20,28 @@ pipeline {
         }
         stage('Run Tests') {
             steps {
-                dir("${env.WORKSPACE}/temperature_sensor_simulator") {
-                    sh 'pytest tests/ --maxfail=1 --disable-warnings -q'
-                }
-                dir("${env.WORKSPACE}/humidity_sensor_simulator") {
-                    sh 'pytest tests/ --maxfail=1 --disable-warnings -q'
+                script {
+                    docker.image('python:3.12').inside {
+                        sh '''
+                        pip install -r temperature_sensor_simulator/requirements.txt
+                        pip install -r humidity_sensor_simulator/requirements.txt
+                        pip install pytest
+
+                        pytest temperature_sensor_simulator/tests/ --maxfail=1 --disable-warnings -q --junitxml=report_temp.xml
+                        pytest humidity_sensor_simulator/tests/ --maxfail=1 --disable-warnings -q --junitxml=report_humidity.xml
+                        '''
+                    }
                 }
             }
-        }
-        stage('Deploy') {
-            steps {
-                echo "No deployment step yet — skipping."
+            post {
+                always {
+                    junit 'report_*.xml'
+                }
             }
         }
     }
-    
-    post {
-        always {
-            junit 'report.xml'
-        }
+
+    post{
         success {
             echo "Pipeline finished successfully"
         }
