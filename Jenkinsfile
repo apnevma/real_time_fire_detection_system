@@ -9,9 +9,11 @@ pipeline {
         }
         stage('Build Docker Conatiners') {
             steps {
-                echo "Building and starting Docker containers..."
-                sh 'docker compose -f docker-compose-mongodb.yml -p mongodb up --build -d'
-            }
+                // Run docker compose from the repo root so relative paths work
+                dir("${env.WORKSPACE}") {
+                    echo "Building and starting Docker containers..."
+                    sh 'docker compose -f docker-compose-mongodb.yml -p mongodb up --build -d'
+                }
         }
         stage('Deploy') {
             steps {
