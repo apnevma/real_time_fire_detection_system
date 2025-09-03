@@ -18,13 +18,13 @@ pipeline {
                 echo "No deployment step yet: skipping"
             }
         }
-        post {
-            success {
-                echo "Pipeline finished successfully"
-            }
-            failure {
-                echo "Pipeline failed"
-        }
     }
+    post {
+        success {
+            echo "Pipeline finished successfully!"
+        }
+        failure {
+            echo "Pipeline failed :("
+        }
     }
 }
