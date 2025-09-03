@@ -1,0 +1,8 @@
+# Dockerfile.tfserving
+
+FROM tensorflow/serving:latest
+
+# Copy NN model into the container
+COPY ML/models/fire_nn /models/fire_nn
+
+ENV MODEL_NAME=fire_nn
