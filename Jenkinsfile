@@ -18,14 +18,28 @@ pipeline {
                 }
             }
         }
-
+        stage('Run Tests') {
+            steps {
+                dir("${env.WORKSPACE}/temperature_sensor_simulator") {
+                    sh 'pytest tests/ --maxfail=1 --disable-warnings -q'
+                }
+                dir("${env.WORKSPACE}/humidity_sensor_simulator") {
+                    sh 'pytest tests/ --maxfail=1 --disable-warnings -q'
+                }
+            }
+        }
         stage('Deploy') {
             steps {
                 echo "No deployment step yet — skipping."
             }
         }
     }
-
+    
+    post {
+        always {
+            junit 'report.xml'
+        }
+    }
     post {
         success {
             echo "Pipeline finished successfully"

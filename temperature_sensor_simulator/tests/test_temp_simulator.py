@@ -1,7 +1,5 @@
-import pytest
-import os
 import json
-from datetime import datetime, date
+from datetime import datetime
 from temperature_sensor_simulator import temp_simulator
 
 def test_generate_sensor_data_first_call(tmp_path, monkeypatch):
